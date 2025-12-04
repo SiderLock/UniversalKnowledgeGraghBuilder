@@ -68,14 +68,16 @@ Universal-KG-Builder/
 ├── main.py             # 命令行流水线入口
 └── requirements.txt    # 项目依赖
 ```
-## 4.后续更新
+### 4.后续更新
 1.  确保代码能正确完成需求。
 2.  优化最后导入Neo4j,可以不选择导入，仅导出CSV文件。
 3.  优化GUI界面。
 **画饼专用线................画饼专用线**
+
 ## 📄 许可证 (License)
 
 MIT License
+
 
 
 
