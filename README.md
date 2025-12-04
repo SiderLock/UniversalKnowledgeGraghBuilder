@@ -1,6 +1,6 @@
 # 🌐 Universal KG Builder
 
-> **通用知识图谱构建平台 **
+> 通用知识图谱构建平台 
 > 
 > *A Universal, GUI-based Knowledge Graph Construction Platform Powered by LLMs.*
 
@@ -77,6 +77,7 @@ Universal-KG-Builder/
 ## 📄 许可证 (License)
 
 MIT License
+
 
 
 
