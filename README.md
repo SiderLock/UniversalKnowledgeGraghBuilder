@@ -8,7 +8,8 @@
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![GUI](https://img.shields.io/badge/GUI-PyQt5-orange)](https://riverbankcomputing.com/software/pyqt/intro)
 
-**Universal KG Builder** 是一个知识图谱构建工具。它原先是针对于化学品相关的处理，经过Ai的融合与修改开始创始转为通用的流水线，帮助用户利用大语言模型 (LLM) 从非结构化或半结构化数据中提取信息，构建任意领域的知识图谱。目前为0.1.0版本尚未确保其可用性，请等待后续测试与更新。
+**Universal KG Builder** 是一个知识图谱构建工具。它原先是针对于化学品相关的处理，经过Ai的融合与修改开始创始转为通用的流水线，帮助用户利用大语言模型 (LLM) 从非结构化或半结构化数据中提取信息，构建任意领域的知识图谱。
+****目前为0.1.0版本尚未确保其可用性，请等待后续测试与更新。****
 
 ## ✨ 核心特性 (Features)
 
@@ -70,6 +71,7 @@ Universal-KG-Builder/
 ## 📄 许可证 (License)
 
 MIT License
+
 
 
 
