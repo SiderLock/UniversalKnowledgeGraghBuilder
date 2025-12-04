@@ -1,0 +1,15 @@
+domains:
+  chemical:
+    description: "化学品数据补全与知识图谱构建"
+    schema:
+      entity_type: "Chemical"
+      attributes:
+        - name: "物理性质"
+          description: "如熔点、沸点、外观等"
+        - name: "危险性"
+          description: "GHS分类、运输危险性等"
+        - name: "用途"
+          description: "工业、医药、科研等用途"
+    prompts:
+      system: "你是一个专业的化学专家，负责完善化学品数据库。"
+      user_template: "请提供化学品 '{entity_name}' 的以下信息：{attributes}。请以JSON格式返回，key为属性名，value为属性值。如果信息不确定，请留空。"

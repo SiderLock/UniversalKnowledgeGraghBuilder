@@ -1,0 +1,36 @@
+project:
+  name: "Universal Chemical Knowledge Graph"
+  version: "0.1.0"
+  description: "Open Source Chemical Knowledge Graph Construction Pipeline"
+
+paths:
+  data_dir: "data"
+  output_dir: "output"
+  logs_dir: "logs"
+
+modules:
+  data_cleaning:
+    enabled: true
+    input_file: "data/raw/input.csv"
+    reference_file: "data/reference_data/国家危化品清单.csv"
+    output_file: "data/interim/cleaned_data.csv"
+    
+  data_enrichment:
+    enabled: true
+    input_file: "data/interim/cleaned_data.csv"
+    output_file: "data/interim/enriched_data.csv"
+    api:
+      provider: "dashscope" # or "openai", "gemini"
+      model: "qwen-plus"
+      # api_key: "YOUR_API_KEY" # Set via environment variable OPENCHEMKG_API_KEY
+      
+  post_processing:
+    enabled: true
+    input_file: "data/interim/enriched_data.csv"
+    output_dir: "data/processed"
+    
+  graph_construction:
+    enabled: true
+    input_file: "data/processed/final_data.csv"
+    output_dir: "data/neo4j"
+    config_file: "modules/graph_construction/config/config.yaml"
