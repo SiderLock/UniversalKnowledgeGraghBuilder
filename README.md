@@ -55,6 +55,20 @@ Note: The tool works in fallback mode without an API key, using pattern-based ex
 
 ## Usage
 
+### Quick Demo
+
+Run the demo script to see the tool in action:
+
+```bash
+python demo.py
+```
+
+This will:
+1. Extract entities and relationships from sample text
+2. Build a knowledge graph
+3. Generate visualizations
+4. Save outputs to the `output/` directory
+
 ### Running the GUI
 
 Simply run the GUI application:
