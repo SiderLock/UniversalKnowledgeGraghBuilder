@@ -1,7 +1,0 @@
-pandas
-numpy
-neo4j
-click
-pyyaml
-chardet
-openpyxl
