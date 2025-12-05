@@ -1,0 +1,73 @@
+# 配置文件
+data:
+  input_file: "data/raw/test.csv"
+  output_dir: "data/processed"
+  neo4j_output_dir: "data/neo4j"
+
+processing:
+  # 文本标准化配置
+  text_normalization:
+    # 同义词映射
+    synonyms:
+      状态:
+        - ["固态", "固体", "固相"]
+        - ["液态", "液体", "液相"]
+        - ["气态", "气体", "气相"]
+      存储:
+        - ["密闭容器", "密闭储存", "密封存储"]
+        - ["避光", "避光保存", "遮光储存"]
+        - ["低温", "冷藏", "低温保存"]
+      颜色:
+        - ["无色", "透明", "无色透明"]
+        - ["白色", "白色至浅黄色", "白色至浅棕色"]
+        - ["黄色", "浅黄色", "淡黄色"]
+    
+    # 需要分离的复合属性
+    compound_attributes:
+      - "别名"  # 用分号、逗号分离
+      - "建议存储条件"  # 按条件类型分离
+      - "溶解性"  # 按溶剂类型分离
+      - "爆炸极限（LEL/UEL）"  # 分离为上下限
+      - "健康危害"  # 按危害类型分离
+      - "环境危害"  # 按环境影响分离
+
+  # 数据清洗配置
+  data_cleaning:
+    # 需要清理的无效值
+    invalid_values:
+      - "N/A"
+      - "处理异常"
+      - ""
+      - "null"
+    
+    # 单位标准化
+    unit_normalization:
+      temperature: ["°C", "℃"]
+      pressure: ["kPa", "Pa", "mmHg", "hPa"]
+      density: ["g/cm³", "g/ml"]
+
+# Neo4j导出配置
+neo4j:
+  node_types:
+    - name: "Chemical"
+      properties: ["品名", "CAS号", "分子式", "分子量"]
+    - name: "PhysicalProperty"
+      properties: ["属性名", "属性值", "单位"]
+    - name: "SafetyInfo"
+      properties: ["危害类型", "危害描述"]
+    - name: "Storage"
+      properties: ["存储方式", "存储条件"]
+  
+  relationship_types:
+    - name: "HAS_ALIAS"
+      from: "Chemical"
+      to: "Chemical"
+    - name: "HAS_PROPERTY"
+      from: "Chemical"
+      to: "PhysicalProperty"
+    - name: "HAS_HAZARD"
+      from: "Chemical"
+      to: "SafetyInfo"
+    - name: "REQUIRES_STORAGE"
+      from: "Chemical"
+      to: "Storage"
