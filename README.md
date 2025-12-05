@@ -1,6 +1,6 @@
 # 🌐 Universal KG Builder
 
-> **通用知识图谱构建平台 v2.1**
+> **通用知识图谱构建平台 v0.2.0**
 > 
 > *A Modern, GUI-based Knowledge Graph Construction Platform Powered by Multi-Provider LLMs*
 
@@ -242,3 +242,4 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 **🌟 如果这个项目对您有帮助，欢迎 Star！🌟**
 
 </div>
+
