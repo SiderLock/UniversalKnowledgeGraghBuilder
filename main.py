@@ -17,10 +17,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('openchemkg.log', encoding='utf-8')
+        logging.FileHandler('universal_kg_builder.log', encoding='utf-8')
     ]
 )
-logger = logging.getLogger("OpenChemKG")
+logger = logging.getLogger("UniversalKGBuilder")
 
 class Pipeline:
     def __init__(self, config_path="config/config.yaml"):
@@ -50,7 +50,7 @@ class Pipeline:
             logger.info("Data Cleaning is disabled.")
             return
 
-        from modules.data_cleaning.process_chemicals import process_data
+        from modules.data_cleaning.data_processor import process_data
 
         input_file = self._get_path(cfg['input_file'])
         reference_file = self._get_path(cfg['reference_file'])
@@ -158,17 +158,17 @@ class Pipeline:
             return
 
         try:
-            from modules.post_processing.chemical_processor import ChemicalProcessor
+            from modules.post_processing.entity_processor import EntityProcessor
             
             # Initialize processor
-            processor = ChemicalProcessor()
+            processor = EntityProcessor()
             
             # The original code might need some adaptation to accept specific input/output paths
             # directly in a method call if it wasn't designed that way.
             # Assuming we can use process_file or similar.
             
-            # Looking at the code, ChemicalProcessor seems to have methods like process_batch
-            # We might need to adapt this part based on the specific implementation of ChemicalProcessor
+            # Looking at the code, EntityProcessor seems to have methods like process_batch
+            # We might need to adapt this part based on the specific implementation of EntityProcessor
             
             logger.info("Post Processing logic initialized.")
             # processor.process_file(str(input_file), str(output_dir)) # Hypothetical call
