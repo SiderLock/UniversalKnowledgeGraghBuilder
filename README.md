@@ -1,89 +1,244 @@
 # 🌐 Universal KG Builder
 
-> 通用知识图谱构建平台 
+> **通用知识图谱构建平台 v2.1**
 > 
-> *A Universal, GUI-based Knowledge Graph Construction Platform Powered by LLMs.*
+> *A Modern, GUI-based Knowledge Graph Construction Platform Powered by Multi-Provider LLMs*
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://www.python.org/)
+[![PyQt6](https://img.shields.io/badge/GUI-PyQt6-41CD52?logo=qt)](https://www.riverbankcomputing.com/software/pyqt/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![GUI](https://img.shields.io/badge/GUI-PyQt5-orange)](https://riverbankcomputing.com/software/pyqt/intro)
+[![LLM](https://img.shields.io/badge/LLM-Multi--Provider-orange)](https://openai.com/)
 
-**Universal KG Builder** 是一个知识图谱构建工具。它原先是针对于化学品相关的处理，经过Ai的融合与修改开始创始转为通用的流水线，帮助用户利用大语言模型 (LLM) 从非结构化或半结构化数据中提取信息，构建任意领域的知识图谱。
+**Universal KG Builder** 是一个现代化的、可视化的知识图谱构建工具。它提供了一套完整的流水线，帮助用户利用大语言模型 (LLM) 从非结构化或半结构化数据中提取信息，构建任意领域的知识图谱。
+---
+## 特别提醒
+****本项目尚处开发阶段，不保证其完全可用，生成内容有AI模型提供可能存在不准确性。****
+**目前确定可用的只有界面可以启动，具体运行结果还没测试**
 
-## ****提醒：目前为0.1.0版本尚未确保其可用性，请等待后续测试与更新。****
+---
 
-## ✨ 核心特性 (Features)
+## ✨ 核心特性
 
-*   **🎨 现代化 GUI 界面**: 基于 PyQt5 构建的现代化界面，支持深色模式风格、圆角设计和流畅的交互动画。
-*   **🌐 多领域支持**: 内置通用模板，支持自定义领域 Schema（实体与属性），无论是生物、金融还是文学领域皆可适配。
-*   **🤖 LLM 智能增强**: 集成 OpenAI / DashScope (通义千问) 等大模型接口，自动补全缺失的实体属性。
-*   **📝 可视化 Schema 编辑器**: 通过表格形式直观管理实体属性定义、数据类型和描述。
-*   **🚀 一键流水线**: 集成数据清洗、LLM 补全、后处理和图构建（Neo4j 导出）的完整工作流。
+### 🎨 现代化 GUI 界面
+- 基于 **PyQt6** 构建的现代化界面
+- 支持 **亮色/暗色主题** 切换
+- **Toast 通知系统** - 非阻塞式操作反馈
+- 流畅的动画效果和圆角设计
 
-## 🛠️ 快速开始 (Quick Start)
+### 🤖 多 LLM 提供商支持
+| 提供商 | 模型示例 | 状态 |
+|--------|----------|------|
+| **DashScope** (阿里通义) | qwen-plus, qwen-max | ✅ 支持 |
+| **OpenAI** | gpt-4, gpt-3.5-turbo | ✅ 支持 |
+| **Ollama** (本地部署) | llama3, qwen2 | ✅ 支持 |
 
-### 1. 环境准备
+### 📝 可视化 Prompt 构建器
+- **变量插入按钮**: 一键插入 `{entity_name}`, `{attributes}` 等动态变量
+- **实时预览**: 查看渲染后的 Prompt 效果
+- **6种内置模板**: 通用、化学、医药、制造业、学术、科研
+- **AI 智能生成**: 描述需求，自动生成完整配置
 
-本项目推荐使用 `uv` 进行极速依赖管理（也支持标准的 pip）。
+### 🔄 完整数据流水线
+```
+CSV数据 → 数据清洗 → LLM数据富集 → 后处理 → Neo4j图构建
+            ↓           ↓              ↓          ↓
+         [检查点]    [检查点]      [检查点]    [检查点]
+```
+- **断点续传**: 支持从中断处恢复长时间任务
+- **并发处理**: 可配置的多线程并行处理
+- **进度追踪**: 可视化阶段状态和进度
 
+### 🌐 多领域支持
+内置支持化学品领域模板，同时可自定义任何领域：
+- 定义实体类型和属性 Schema
+- 配置数据来源要求
+- 自定义 System/User Prompt
+
+---
+
+## 🛠️ 快速开始
+
+### 环境要求
+- Python 3.10+
+- (可选) Neo4j 数据库 (用于图构建)
+- (可选) Ollama (用于本地模型)
+
+### 安装
+
+**推荐使用 `uv` (极速依赖管理)**:
 ```bash
-# 安装 uv (如果尚未安装)
+# 安装 uv
 pip install uv
 
-# 同步依赖环境
+# 克隆项目
+git clone https://github.com/your-repo/universal-kg-builder.git
+cd universal-kg-builder
+
+# 同步依赖
 uv sync
 ```
 
-或者使用 pip:
+**或使用 pip**:
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 启动应用
+### 启动应用
 
 ```bash
-# 启动图形化界面
-uv run python gui.py
+# 使用 uv
+uv run gui.py
+
+# 或直接使用 Python
+python gui.py
 ```
 
-### 3. 使用流程
+---
 
-1.  **配置领域**: 在 "领域与提示词" 标签页中，选择或新建一个领域（如 "Medicine"）。
-2.  **定义 Schema**: 使用可视化编辑器添加该领域实体的属性（如 "适应症", "副作用" 等）。
-3.  **生成/加载 Prompt**: 点击 "自动生成提示词" 或 "加载通用模板"。
-4.  **数据处理**: 切换到 "数据处理" 标签页，上传包含实体名称的 CSV 文件，点击 "开始补全数据"。
-5.  **导出图谱**: 在 "完整流水线" 中运行构建任务，生成 Neo4j 导入文件。
+## 📖 使用指南
+
+### 1️⃣ 智能向导 (推荐新用户)
+1. 进入 **"🚀 智能向导"** 页面
+2. 描述您想构建的领域（如："我想构建一个关于中药材的知识图谱..."）
+3. 点击 **"AI 分析并推荐"**，AI 将自动推荐实体和属性
+4. 确认后点击 **"生成完整数据集"**
+
+### 2️⃣ 领域配置
+进入 **"🏷️ 领域配置"** 页面，使用选项卡配置：
+
+| 选项卡 | 功能 |
+|--------|------|
+| 📋 基础 & Schema | 定义实体类型和属性 |
+| 📡 数据来源 | 配置 AI 参考的数据源 |
+| 🤖 System Prompt | 设定 AI 的角色 |
+| 💬 User Prompt | 构建查询模板（支持变量插入和预览）|
+| ✨ AI 生成 | 一键生成全部配置 |
+
+### 3️⃣ 数据处理
+1. 进入 **"📂 数据处理"** 页面
+2. 上传 CSV 文件（或点击 "加载示例" 使用内置数据）
+3. 选择实体名称列和领域配置
+4. 点击 **"开始补全数据"**
+
+### 4️⃣ 流水线运行
+进入 **"⚙️ 流水线"** 页面，运行完整的数据处理流程：
+- 可视化阶段状态卡片
+- 支持暂停/继续/停止
+- 断点恢复功能
+
+---
+
+## ⚙️ 配置说明
+
+### API 配置
+在 **"🔧 设置"** 页面配置 LLM 提供商：
+
+**DashScope (阿里通义)**:
+```yaml
+Provider: dashscope
+API Key: sk-your-dashscope-key
+Model: qwen-plus
+```
+
+**OpenAI**:
+```yaml
+Provider: openai
+API Key: sk-your-openai-key
+Base URL: https://api.openai.com/v1 (或代理地址)
+Model: gpt-4
+```
+
+**Ollama (本地)**:
+```yaml
+Provider: ollama
+Base URL: http://localhost:11434/v1
+Model: qwen2:7b
+```
+
+### Neo4j 配置
+```yaml
+URI: bolt://localhost:7687
+User: neo4j
+Password: your-password
+```
+
+---
 
 ## 📂 项目结构
 
 ```
 Universal-KG-Builder/
-├── config/             # 领域配置与 Schema 定义 (YAML)
-├── data/               # 数据存储 (输入/输出)
-├── modules/            # 核心功能模块
-│   ├── universal_enricher.py  # LLM 交互核心
-│   ├── graph_construction/    # 图构建逻辑
-│   └── ...
-├── gui.py              # PyQt5 图形界面入口
-├── main.py             # 命令行流水线入口
-└── requirements.txt    # 项目依赖
+├── gui.py                  # 🖥️ PyQt6 图形界面入口
+├── main.py                 # 📟 命令行入口
+├── config/
+│   ├── config.yaml         # 全局配置
+│   └── domains.yaml        # 领域配置存储
+├── data/
+│   ├── demo/               # 示例数据
+│   └── reference_data/     # 参考数据
+├── modules/
+│   ├── universal_enricher.py      # LLM 交互核心
+│   ├── pipeline_manager.py        # 流水线管理器
+│   ├── data_cleaning/             # 数据清洗模块
+│   ├── data_enrichment/           # 数据富集模块
+│   │   ├── core/                  # 核心处理逻辑
+│   │   ├── utils/                 # 工具函数
+│   │   └── config/                # 配置管理
+│   ├── post_processing/           # 后处理模块
+│   └── graph_construction/        # Neo4j 图构建
+├── pyproject.toml          # 项目配置
+└── requirements.txt        # 依赖列表
 ```
-### 4.后续更新
-1.  确保代码能正确完成需求。
-2.  优化最后导入Neo4j,可以不选择导入，仅导出CSV文件。
-3.  优化GUI界面。
-4.   ***画大饼***
 
-## 📄 许可证 (License)
+---
 
-MIT License
+## 🔧 高级功能
+
+### 并发处理配置
+在设置页面调整 `最大并发数` 参数，控制同时处理的实体数量。
+
+### 断点续传
+流水线支持从检查点恢复：
+1. 任务中断后，重新打开应用
+2. 在流水线页面选择之前的管道实例
+3. 勾选 "跳过已完成阶段" 后继续运行
+
+### 自定义 Prompt 变量
+在 User Prompt 中可使用以下变量：
+- `{entity_name}` - 当前实体名称
+- `{attributes}` - Schema 中定义的属性列表
+- `{source_instruction}` - 数据来源要求
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+### 开发环境设置
+```bash
+# 安装开发依赖
+uv sync --group dev
+
+# 运行测试
+uv run pytest
+
+# 代码格式化
+uv run black .
+uv run isort .
+```
+
+---
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE](LICENSE) 文件
+
+---
 
 
+<div align="center">
 
+**🌟 如果这个项目对您有帮助，欢迎 Star！🌟**
 
-
-
-
-
-
-
+</div>
