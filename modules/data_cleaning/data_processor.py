@@ -764,7 +764,7 @@ def process_data(input_file, hazardous_chemicals_file, output_file):
 def process_all_files():
     """批量处理所有待处理文件"""
     print("=" * 80)
-    print("🧪 化学品数据批量处理工具 v2.1")
+    print("🧪 化学品数据批量处理工具 v0.3.0")
     print("=" * 80)
     
     # 定义文件路径 - 数据文件在父目录中
