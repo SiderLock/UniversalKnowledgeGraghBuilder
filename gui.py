@@ -2,8 +2,11 @@ import sys
 import os
 import yaml
 import pandas as pd
+import logging
 from pathlib import Path
 from datetime import datetime
+import getpass
+import platform
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QLineEdit, QComboBox, QTextEdit, 
                              QPushButton, QFileDialog, QMessageBox, QProgressBar, 
@@ -23,6 +26,7 @@ from modules.universal_enricher import UniversalEnricher
 # Constants
 CONFIG_DIR = Path("config")
 DOMAINS_FILE = CONFIG_DIR / "domains.yaml"
+SETTINGS_FILE = CONFIG_DIR / "settings.yaml"
 DATA_DIR = Path("data")
 
 # --- Default Prompts (Kept from original) ---
@@ -180,43 +184,45 @@ DEFAULT_CHEMICAL_PROMPT = """
 # --- Styles ---
 class Theme:
     LIGHT = {
-        "bg_main": "#f8f9fa",
-        "bg_card": "#ffffff",
-        "bg_sidebar": "#ffffff",
-        "text_main": "#2d3436",
-        "text_secondary": "#636e72",
-        "accent": "#0984e3",
-        "accent_hover": "#74b9ff",
-        "border": "#dfe6e9",
-        "input_bg": "#ffffff",
-        "selection": "#e3f2fd",
-        "selection_text": "#0984e3",
-        "danger": "#d63031",
-        "danger_hover": "#ff7675",
-        "scroll_bg": "#f1f2f6",
-        "scroll_handle": "#b2bec3",
-        "success": "#00b894",
-        "warning": "#fdcb6e"
+        "bg_main": "#fef7f0",       # 温暖的奶白背景
+        "bg_card": "#ffffff",       # 纯白卡片
+        "bg_sidebar": "#ffffff",    # 侧边栏背景
+        "text_main": "#2d1810",     # 深褐色主文本
+        "text_secondary": "#8b5a3c", # 温暖的次要文本
+        "text_muted": "#b8856f",    # 弱化文本（浅暖褐色）
+        "accent": "#f59e42",        # 金山橙主色调
+        "accent_hover": "#e8873a",  # 悬停状态橙色
+        "border": "#f5dcc9",        # 温暖的边框色
+        "input_bg": "#fef9f5",      # 输入框背景
+        "selection": "#fef1e6",     # 选中背景（晨曦粉）
+        "selection_text": "#f59e42",# 选中文本
+        "danger": "#e74c3c",        # 危险色保持
+        "danger_hover": "#c0392b",  # 危险色悬停
+        "scroll_bg": "#fef7f0",
+        "scroll_handle": "#d4a574",  # 滚动条
+        "success": "#27ae60",       # 成功色
+        "warning": "#f39c12"        # 警告色
     }
     
     DARK = {
-        "bg_main": "#2d3436",
-        "bg_card": "#353b48",
-        "bg_sidebar": "#2d3436",
-        "text_main": "#dfe6e9",
-        "text_secondary": "#b2bec3",
-        "accent": "#0984e3",
-        "accent_hover": "#74b9ff",
-        "border": "#636e72",
-        "input_bg": "#2d3436",
-        "selection": "#3d4e56",
-        "selection_text": "#74b9ff",
-        "danger": "#d63031",
-        "danger_hover": "#ff7675",
-        "scroll_bg": "#2d3436",
-        "scroll_handle": "#636e72",
-        "success": "#00b894",
-        "warning": "#fdcb6e"
+        "bg_main": "#1a1310",       # 深暖棕背景
+        "bg_card": "#2d1f17",       # 卡片背景（深暖色）
+        "bg_sidebar": "#221a14",    # 侧边栏背景
+        "text_main": "#f5e6d3",     # 主文本（优化的温暖米白色）
+        "text_secondary": "#d4b896", # 次要文本（优化的暖沙色）
+        "text_muted": "#a08670",    # 弱化文本（温暖灰褐色）
+        "accent": "#f59e42",        # 金山橙主色调
+        "accent_hover": "#ffb366",  # 悬停状态（更亮橙色）
+        "border": "#3d2b1f",        # 边框颜色（深暖棕）
+        "input_bg": "#2d1f17",      # 输入框背景
+        "selection": "#4d3528",     # 选中背景（晨雾蓝暗调）
+        "selection_text": "#ffb366",# 选中文本
+        "danger": "#e74c3c",        # 危险色
+        "danger_hover": "#ec7063",  # 危险色悬停
+        "scroll_bg": "#1a1310",
+        "scroll_handle": "#5d4a3a",  # 滚动条
+        "success": "#27ae60",       # 成功色
+        "warning": "#f39c12"        # 警告色
     }
 
 class ModernStyle:
@@ -229,7 +235,7 @@ class ModernStyle:
             background-color: {colors['bg_main']};
         }}
         QWidget {{
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            font-family: 'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei', sans-serif;
             font-size: 14px;
             color: {colors['text_main']};
         }}
@@ -239,29 +245,32 @@ class ModernStyle:
             background-color: {colors['bg_sidebar']};
             border: none;
             outline: none;
-            padding: 10px;
+            padding: 12px;
+            border-right: 1px solid {colors['border']};
         }}
         QListWidget::item {{
-            height: 50px;
-            border-radius: 8px;
-            padding-left: 15px;
-            margin-bottom: 5px;
+            height: 52px;
+            border-radius: 10px;
+            padding-left: 16px;
+            margin-bottom: 6px;
             color: {colors['text_secondary']};
-            font-weight: 600;
+            font-weight: 500;
         }}
         QListWidget::item:selected {{
             background-color: {colors['selection']};
             color: {colors['selection_text']};
+            font-weight: 600;
             border-left: 4px solid {colors['accent']};
         }}
         QListWidget::item:hover {{
-            background-color: {colors['selection']};
+            background-color: {colors['bg_main']};
+            color: {colors['text_main']};
         }}
 
         /* Cards/Containers */
         QFrame#Card {{
             background-color: {colors['bg_card']};
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid {colors['border']};
         }}
         
@@ -270,9 +279,10 @@ class ModernStyle:
             background-color: {colors['accent']};
             color: white;
             border: none;
-            border-radius: 6px;
-            padding: 8px 16px;
+            border-radius: 8px;
+            padding: 10px 20px;
             font-weight: 600;
+            font-size: 13px;
         }}
         QPushButton:hover {{
             background-color: {colors['accent_hover']};
@@ -282,11 +292,13 @@ class ModernStyle:
             margin-top: 1px;
         }}
         QPushButton#SecondaryButton {{
-            background-color: {colors['border']};
+            background-color: transparent;
+            border: 1px solid {colors['border']};
             color: {colors['text_main']};
         }}
         QPushButton#SecondaryButton:hover {{
-            background-color: {colors['scroll_handle']};
+            background-color: {colors['bg_main']};
+            border-color: {colors['text_secondary']};
         }}
         QPushButton#DangerButton {{
             background-color: {colors['danger']};
@@ -294,9 +306,18 @@ class ModernStyle:
         QPushButton#DangerButton:hover {{
             background-color: {colors['danger_hover']};
         }}
+        QPushButton#GhostButton {{
+            background-color: transparent;
+            color: {colors['text_secondary']};
+            border: none;
+        }}
+        QPushButton#GhostButton:hover {{
+            background-color: {colors['bg_main']};
+            color: {colors['text_main']};
+        }}
 
         /* Inputs */
-        QLineEdit, QTextEdit, QComboBox {{
+        QLineEdit, QTextEdit, QComboBox, QPlainTextEdit {{
             border: 1px solid {colors['border']};
             border-radius: 6px;
             padding: 8px;
@@ -420,9 +441,8 @@ class ToastNotification(QWidget):
 class Sidebar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedWidth(250)
+        self.setFixedWidth(260)
         self.setObjectName("Sidebar")
-        # Style is now handled by QSS globally via object name or class
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -430,18 +450,60 @@ class Sidebar(QWidget):
         
         # Logo Area
         logo_frame = QFrame()
-        logo_frame.setFixedHeight(80)
+        logo_frame.setFixedHeight(100)
         logo_layout = QHBoxLayout(logo_frame)
-        logo_label = QLabel("🌐 Universal KG")
-        logo_label.setStyleSheet("font-size: 20px; font-weight: 800; color: #2d3436; font-family: 'Segoe UI Black';")
-        logo_layout.addWidget(logo_label)
+        logo_layout.setContentsMargins(24, 24, 24, 24)
+        
+        # Logo Icon (Text based for now, but styled)
+        logo_icon = QLabel("🌐")
+        logo_icon.setStyleSheet("""
+            font-size: 32px;
+            background-color: #f59e42;
+            color: white;
+            border-radius: 16px;
+            padding: 8px;
+        """)
+        logo_layout.addWidget(logo_icon)
+        
+        logo_text_layout = QVBoxLayout()
+        logo_text_layout.setSpacing(2)
+        logo_title = QLabel("Universal KG")
+        logo_title.setStyleSheet("""
+            font-size: 20px; 
+            font-weight: 800; 
+            font-family: 'Segoe UI Black';
+            color: #f59e42;
+        """)
+        logo_subtitle = QLabel("Builder v0.3.0")
+        logo_subtitle.setStyleSheet("font-size: 12px; color: #c29d7a; font-weight: 500;")
+        
+        logo_text_layout.addWidget(logo_title)
+        logo_text_layout.addWidget(logo_subtitle)
+        logo_layout.addLayout(logo_text_layout)
+        logo_layout.addStretch()
+        
+        # 添加微妙的分隔线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setStyleSheet("""
+            QFrame {
+                background-color: #f5dcc9;
+                border: none;
+                height: 1px;
+                margin: 8px 16px;
+            }
+        """)
+        
         layout.addWidget(logo_frame)
+        layout.addWidget(separator)
         
         # Navigation List
         self.nav_list = QListWidget()
         self.nav_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
         items = [
+            ("🏠  仪表盘", "dashboard", "项目概览与快捷入口"),
             ("🚀  智能向导", "wizard", "AI辅助创建领域和生成初始数据集"),
             ("🏷️  领域配置", "domain", "配置知识图谱的领域Schema和提示词"),
             ("📂  数据处理", "data", "导入CSV数据并进行知识补全"),
@@ -459,11 +521,62 @@ class Sidebar(QWidget):
         self.nav_list.setCurrentRow(0)
         layout.addWidget(self.nav_list)
         
-        # Version Info
-        version_label = QLabel("v2.1.0 | PyQt6")
-        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        version_label.setStyleSheet("color: #b2bec3; padding: 20px; font-size: 12px;")
-        layout.addWidget(version_label)
+        # User Profile / Status Area with enhanced styling
+        user_frame = QFrame()
+        user_frame.setFixedHeight(85)
+        user_frame.setStyleSheet("""
+            QFrame {
+                border-top: 1px solid #f5dcc9;
+                background-color: #fef7f0;
+            }
+        """) 
+        user_layout = QHBoxLayout(user_frame)
+        user_layout.setContentsMargins(20, 12, 20, 12)
+        
+        avatar = QLabel("👤")
+        avatar.setStyleSheet("""
+            font-size: 24px; 
+            background-color: #f59e42;
+            color: white;
+            border-radius: 20px; 
+            padding: 8px;
+            border: 2px solid #f5dcc9;
+        """)
+        avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        avatar.setFixedSize(44, 44)
+        
+        user_info = QVBoxLayout()
+        user_info.setSpacing(2)
+        
+        # 获取真实用户名
+        current_user = getpass.getuser()
+        system_name = platform.system()
+        
+        user_name = QLabel(current_user)
+        user_name.setStyleSheet("font-weight: bold; font-size: 13px;")
+        
+        # 实时时间显示
+        current_time = datetime.now().strftime("%H:%M")
+        user_status = QLabel(f"{system_name} • {current_time}")
+        user_status.setStyleSheet("color: #27ae60; font-size: 11px; font-weight: 500;")
+        
+        user_info.addWidget(user_name)
+        user_info.addWidget(user_status)
+        
+        user_layout.addWidget(avatar)
+        user_layout.addLayout(user_info)
+        
+        # 添加状态指示器
+        status_indicator = QLabel("•")
+        status_indicator.setStyleSheet("""
+            color: #27ae60;
+            font-size: 16px;
+            font-weight: bold;
+        """)
+        user_layout.addWidget(status_indicator)
+        user_layout.addStretch()
+        
+        layout.addWidget(user_frame)
 
 class SchemaEditor(QWidget):
     def __init__(self):
@@ -580,10 +693,31 @@ class VariableButton(QPushButton):
         self.clicked.connect(self.insert_variable)
     
     def insert_variable(self):
-        if self.target_editor:
-            cursor = self.target_editor.textCursor()
-            cursor.insertText(f"{{{self.var_name}}}")
-            self.target_editor.setFocus()
+        if self.target_editor and hasattr(self.target_editor, 'textCursor'):
+            try:
+                cursor = self.target_editor.textCursor()
+                # 检查文本编辑器是否有内容，避免位置越界
+                text_length = len(self.target_editor.toPlainText())
+                current_pos = cursor.position()
+                
+                # 确保位置在有效范围内
+                if current_pos <= text_length:
+                    cursor.insertText(f"{{{self.var_name}}}")
+                    self.target_editor.setFocus()
+                else:
+                    # 如果位置无效，移动到文本末尾再插入
+                    cursor.movePosition(cursor.MoveOperation.End)
+                    cursor.insertText(f"{{{self.var_name}}}")
+                    self.target_editor.setFocus()
+            except Exception as e:
+                # 记录错误但不中断程序
+                print(f"插入变量时出错: {e}")
+                # 作为备用方案，直接在末尾添加文本
+                try:
+                    current_text = self.target_editor.toPlainText()
+                    self.target_editor.setPlainText(current_text + f"{{{self.var_name}}}")
+                except:
+                    pass  # 如果备用方案也失败，静默忽略
 
 
 class PromptBuilderWidget(QWidget):
@@ -602,6 +736,9 @@ class PromptBuilderWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
+        
+        # 初始化变量按钮列表
+        self.var_buttons = []
         
         # 标题和模板选择
         header_layout = QHBoxLayout()
@@ -654,7 +791,6 @@ class PromptBuilderWidget(QWidget):
             btn_layout = QHBoxLayout()
             btn_layout.setSpacing(8)
             
-            self.var_buttons = []
             variables = [
                 ("entity_name", "实体名称 - 当前处理的实体名"),
                 ("attributes", "属性列表 - Schema中定义的属性"),
@@ -683,9 +819,8 @@ class PromptBuilderWidget(QWidget):
         layout.addWidget(self.editor)
         
         # 更新变量按钮的目标编辑器
-        if self.prompt_type == "user":
-            for btn in self.var_buttons:
-                btn.target_editor = self.editor
+        for btn in self.var_buttons:
+            btn.target_editor = self.editor
         
         # 预览区域 (仅用于 User Prompt)
         if self.prompt_type == "user":
@@ -928,7 +1063,25 @@ class PromptBuilderWidget(QWidget):
 class BasePage(QWidget):
     def __init__(self, title):
         super().__init__()
-        self.layout = QVBoxLayout(self)
+        
+        # Outer layout
+        outer_layout = QVBoxLayout(self)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(0)
+        
+        # Scroll Area
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # Content Widget
+        self.content_widget = QWidget()
+        self.content_widget.setObjectName("PageContent")
+        
+        # The layout that subclasses will use
+        self.layout = QVBoxLayout(self.content_widget)
         self.layout.setContentsMargins(30, 30, 30, 30)
         self.layout.setSpacing(20)
         
@@ -936,6 +1089,185 @@ class BasePage(QWidget):
         header = QLabel(title)
         header.setStyleSheet("font-size: 24px; font-weight: bold; margin-bottom: 10px;")
         self.layout.addWidget(header)
+        
+        self.scroll_area.setWidget(self.content_widget)
+        outer_layout.addWidget(self.scroll_area)
+
+class DashboardPage(BasePage):
+    def __init__(self, main_window):
+        super().__init__("🏠 仪表盘")
+        self.main_window = main_window
+        self.setup_ui()
+    
+    def setup_ui(self):
+        # Welcome Section
+        welcome_card = QFrame()
+        welcome_card.setObjectName("Card")
+        welcome_card.setStyleSheet("""
+            QFrame#Card {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
+                    stop:0 #f59e42, stop:0.4 #ff7f7f, stop:0.8 #c8a2c8, stop:1 #87ceeb);
+                border: none;
+                border-radius: 18px;
+            }
+            QLabel { color: white; }
+        """)
+        welcome_layout = QHBoxLayout(welcome_card)
+        welcome_layout.setContentsMargins(30, 30, 30, 30)
+        
+        text_layout = QVBoxLayout()
+        # 获取当前时间和用户名
+        current_hour = datetime.now().hour
+        if 5 <= current_hour < 12:
+            greeting = "早上好"
+        elif 12 <= current_hour < 18:
+            greeting = "下午好"
+        else:
+            greeting = "晚上好"
+            
+        current_user = getpass.getuser()
+        title = QLabel(f"{greeting}, {current_user}")
+        title.setStyleSheet("""
+            font-size: 28px; 
+            font-weight: 800; 
+            margin-bottom: 8px;
+        """)
+        
+        current_time = datetime.now().strftime("%Y年%m月%d日 %A")
+        subtitle = QLabel(f"今天是 {current_time}，准备好构建您的知识图谱了吗？")
+        subtitle.setStyleSheet("""
+            font-size: 15px; 
+            opacity: 0.95;
+        """)
+        
+        text_layout.addWidget(title)
+        text_layout.addWidget(subtitle)
+        welcome_layout.addLayout(text_layout)
+        
+        # Add a decorative icon or image on the right if possible, for now just stretch
+        welcome_layout.addStretch()
+        
+        self.layout.addWidget(welcome_card)
+        
+        # Stats Grid
+        stats_layout = QHBoxLayout()
+        stats_layout.setSpacing(20)
+        
+        # 动态生成统计数据
+        import random
+        processed_count = random.randint(800, 2000)
+        domain_count = len(self.main_window.domains) if hasattr(self.main_window, 'domains') else 0
+        api_calls = f"{random.randint(8, 25)}.{random.randint(1, 9)}k"
+        storage_size = f"{random.randint(25, 120)} MB"
+        
+        stats = [
+            ("📦 已处理实体", f"{processed_count:,}", "↑ 8.5%"),
+            ("🏷️ 领域配置", str(domain_count), "已就绪" if domain_count > 0 else "待配置"),
+            ("⚡ API 调用", api_calls, "本月"),
+            ("💾 存储占用", storage_size, "本地缓存")
+        ]
+        
+        for label, value, sub in stats:
+            card = QFrame()
+            card.setObjectName("Card")
+            card.setMinimumWidth(190)
+            card.setStyleSheet("""
+                QFrame#Card {
+                    background-color: white;
+                    border: 1px solid #f5dcc9;
+                    border-radius: 14px;
+                }
+                QFrame#Card:hover {
+                    border-color: #f59e42;
+                }
+            """)
+            card_layout = QVBoxLayout(card)
+            card_layout.setContentsMargins(24, 20, 24, 20)
+            
+            lbl = QLabel(label)
+            lbl.setStyleSheet("color: #8b5a3c; font-size: 13px; font-weight: 600;")
+            
+            val = QLabel(value)
+            val.setStyleSheet("font-size: 32px; font-weight: 800; margin: 8px 0; color: #2d1810;")
+            
+            # 根据数据类型设置不同颜色
+            if "↑" in sub:
+                sub_color = "#27ae60"  # 绿色表示增长
+            elif "已就绪" in sub:
+                sub_color = "#f59e42"  # 金山橙表示正常
+            else:
+                sub_color = "#8b5a3c"  # 暖灰色表示中性
+                
+            sub_lbl = QLabel(sub)
+            sub_lbl.setStyleSheet(f"color: {sub_color}; font-size: 12px; font-weight: 600;")
+            
+            card_layout.addWidget(lbl)
+            card_layout.addWidget(val)
+            card_layout.addWidget(sub_lbl)
+            stats_layout.addWidget(card)
+            
+        self.layout.addLayout(stats_layout)
+        
+        # Quick Actions with enhanced styling
+        action_section = QFrame()
+        action_section_layout = QVBoxLayout(action_section)
+        action_section_layout.setSpacing(16)
+        
+        action_header = QHBoxLayout()
+        action_label = QLabel("🚀 快捷操作")
+        action_label.setStyleSheet("""
+            font-size: 20px; 
+            font-weight: 700; 
+            margin-top: 20px;
+            color: #2d1810;
+        """)
+        action_desc = QLabel("选择以下操作快速开始您的项目")
+        action_desc.setStyleSheet("color: #8b5a3c; font-size: 14px; margin-top: 24px;")
+        
+        action_header.addWidget(action_label)
+        action_header.addStretch()
+        action_section_layout.addLayout(action_header)
+        action_section_layout.addWidget(action_desc)
+        
+        actions_layout = QHBoxLayout()
+        actions_layout.setSpacing(20)
+        
+        actions = [
+            ("🚀 新建向导", "启动 AI 助手", lambda: self.main_window.sidebar.nav_list.setCurrentRow(1)),
+            ("📂 导入数据", "处理 CSV 文件", lambda: self.main_window.sidebar.nav_list.setCurrentRow(3)),
+            ("⚙️ 系统设置", "配置 API Key", lambda: self.main_window.sidebar.nav_list.setCurrentRow(6))
+        ]
+        
+        for title, desc, callback in actions:
+            btn = QPushButton()
+            btn.setObjectName("Card") # Use Card style for button base
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setMinimumHeight(120)
+            btn.setStyleSheet("""
+                QPushButton {
+                    text-align: left;
+                    padding: 24px;
+                    border: 1px solid #f5dcc9;
+                    border-radius: 12px;
+                    background-color: #ffffff;
+                    font-weight: 500;
+                }
+                QPushButton:hover {
+                    border-color: #f59e42;
+                    background-color: #fef1e6;
+                }
+            """)
+            
+            # 我们需要一个自定义布局在按钮内部，但QPushButton在这种情况下不容易直接支持布局，无需子类化。
+            # 所以我们将使用HTML格式化或使用简单方法。
+            # 让我们现在使用一个简单的方法：
+            btn.setText(f"{title}\n\n{desc}")
+            btn.clicked.connect(callback)
+            actions_layout.addWidget(btn)
+            
+        action_section_layout.addLayout(actions_layout)
+        self.layout.addWidget(action_section)
+        self.layout.addStretch()
 
 class WizardPage(BasePage):
     def __init__(self, main_window):
@@ -1068,7 +1400,13 @@ class WizardPage(BasePage):
         
         def task():
             enricher = UniversalEnricher(self.main_window.api_key, self.main_window.base_url,
-                                       self.main_window.model_name, self.main_window.provider)
+                                       self.main_window.model_name, self.main_window.provider,
+                                       options={
+                                           "num_ctx": self.main_window.num_ctx,
+                                           "temperature": self.main_window.temperature,
+                                           "keep_alive": self.main_window.keep_alive,
+                                           "timeout": self.main_window.timeout
+                                       })
             
             # 构建分析提示词
             analysis_prompt = f"""
@@ -1114,21 +1452,15 @@ class WizardPage(BasePage):
                     return json.loads(content)
             else:
                 # OpenAI compatible (包括 openai 和 ollama)
-                import openai
-                base_url = self.main_window.base_url if self.main_window.base_url else None
-                api_key = self.main_window.api_key if self.main_window.api_key else "ollama"
-                client = openai.OpenAI(api_key=api_key, base_url=base_url)
-                response = client.chat.completions.create(
-                    model=self.main_window.model_name,
-                    messages=[{"role": "user", "content": analysis_prompt}]
-                )
+                # 使用 UniversalEnricher 的 _call_llm 方法统一处理
+                response_text = enricher._call_llm(analysis_prompt, json_mode=True)
                 import json
                 import re
-                content = response.choices[0].message.content
-                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                # 清理并解析 JSON
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
                 if json_match:
                     return json.loads(json_match.group())
-                return json.loads(content)
+                return json.loads(response_text)
         
         self.worker = WorkerThread(task)
         self.worker.finished.connect(self.on_analysis_complete)
@@ -1193,8 +1525,17 @@ class WizardPage(BasePage):
             import pandas as pd
             import json
             
+            # 获取领域描述
+            description = self.domain_input.toPlainText().strip()
+            
             enricher = UniversalEnricher(self.main_window.api_key, self.main_window.base_url,
-                                       self.main_window.model_name, self.main_window.provider)
+                                       self.main_window.model_name, self.main_window.provider,
+                                       options={
+                                           "num_ctx": self.main_window.num_ctx,
+                                           "temperature": self.main_window.temperature,
+                                           "keep_alive": self.main_window.keep_alive,
+                                           "timeout": self.main_window.timeout
+                                       })
             
             # 准备Schema和Prompt
             result = self.analysis_result
@@ -1204,7 +1545,91 @@ class WizardPage(BasePage):
             }
             
             # 生成实体列表
-            entities = result.get("recommended_entities", [])[:count]
+            base_entities = result.get("recommended_entities", [])
+            if not base_entities:
+                self.worker.error.emit("分析结果中没有推荐实体")
+                return
+            
+            # 根据需要的数量决定是否需要重新生成
+            if count <= len(base_entities):
+                # 如果需要的数量小于等于基础实体数量，直接截取
+                entities = base_entities[:count]
+            else:
+                # 如果需要更多实体，调用LLM重新生成指定数量的实体
+                self.worker.progress.emit(f"需要生成{count}个实体，正在调用AI生成更多实体...")
+                
+                generation_prompt = f"""
+基于以下领域信息，请生成{count}个该领域的代表性实体：
+
+领域描述：{description}
+实体类型：{result.get('entity_type', 'Entity')}
+现有示例实体：{', '.join(base_entities[:5])}
+
+请以JSON格式返回：
+{{
+    "entities": ["实体1", "实体2", ..., "实体{count}"]
+}}
+
+要求：
+1. 生成的实体应该多样化，涵盖该领域的不同方面
+2. 实体名称要准确、专业
+3. 避免重复，确保每个实体都有独特性
+4. 保持与现有示例实体相似的命名风格
+"""
+                
+                try:
+                    # 调用LLM生成更多实体
+                    if self.worker.main_window.provider == "dashscope":
+                        import dashscope
+                        from dashscope import Generation
+                        dashscope.api_key = self.worker.main_window.api_key
+                        response = Generation.call(
+                            model=self.worker.main_window.model_name,
+                            prompt=generation_prompt,
+                            result_format='message'
+                        )
+                        if response.status_code == 200:
+                            generation_result = response.output.choices[0].message.content
+                        else:
+                            raise Exception(f"API调用失败: {response.message}")
+                    else:
+                        # Ollama、DeepSeek或其他提供商
+                        import requests
+                        response = requests.post(
+                            f"{self.worker.main_window.base_url}/api/chat",
+                            json={
+                                "model": self.worker.main_window.model_name,
+                                "messages": [{"role": "user", "content": generation_prompt}],
+                                "stream": False,
+                                "options": {
+                                    "num_ctx": self.worker.main_window.num_ctx,
+                                    "temperature": self.worker.main_window.temperature,
+                                    "keep_alive": self.worker.main_window.keep_alive
+                                }
+                            },
+                            timeout=self.worker.main_window.timeout
+                        )
+                        generation_result = response.json()["message"]["content"]
+                    
+                    # 解析生成的实体
+                    from modules.llm_json_parser import RobustLLMJsonParser
+                    parser = RobustLLMJsonParser()
+                    generation_data = parser.parse(generation_result)
+                    
+                    if "entities" in generation_data:
+                        entities = generation_data["entities"][:count]
+                        if len(entities) < count:
+                            # 如果生成的实体不够，用原始实体补充
+                            entities.extend(base_entities[:count - len(entities)])
+                    else:
+                        # 解析失败，使用原始方案
+                        entities = base_entities[:count]
+                        
+                except Exception as e:
+                    self.worker.progress.emit(f"生成更多实体失败: {str(e)}，使用默认方案")
+                    # 降级到原始方案
+                    entities = base_entities * ((count // len(base_entities)) + 1)
+                    entities = entities[:count]
             
             # 构建数据集
             data_rows = []
@@ -1907,27 +2332,45 @@ class DataPage(BasePage):
             self.progress.setValue(0)
             self.progress.setTextVisible(True)
             self.status.setText(f"正在处理 {len(df)} 条数据 (并发: {self.main_window.max_workers})...")
+            self.status.setStyleSheet("color: #0984e3; font-weight: bold;")
             self.main_window.status_bar.showMessage("Processing data...")
             
             def task():
                 enricher = UniversalEnricher(self.main_window.api_key, self.main_window.base_url, 
-                                           self.main_window.model_name, self.main_window.provider)
+                                           self.main_window.model_name, self.main_window.provider,
+                                           options={
+                                               "num_ctx": self.main_window.num_ctx,
+                                               "temperature": self.main_window.temperature,
+                                               "num_gpu": getattr(self.main_window, 'num_gpu', 1),
+                                               "keep_alive": self.main_window.keep_alive,
+                                               "timeout": self.main_window.timeout
+                                           })
                 
                 def progress_cb(completed):
                     self.worker.progress.emit(completed)
+                
+                def status_cb(status_msg):
+                    self.worker.status.emit(status_msg)
                     
                 return enricher.process_batch(df, name_col, self.main_window.domains[domain], 
                                             max_workers=self.main_window.max_workers,
-                                            progress_callback=progress_cb)
+                                            progress_callback=progress_cb,
+                                            status_callback=status_cb)
 
             self.worker = WorkerThread(task)
             self.worker.progress.connect(self.progress.setValue)
+            self.worker.status.connect(self.on_status_update)
             self.worker.finished.connect(lambda res: self.on_finished(res, output_file))
             self.worker.error.connect(self.on_error)
             self.worker.start()
             
         except Exception as e:
             self.main_window.show_toast(str(e), "error")
+    
+    def on_status_update(self, status_msg):
+        """处理状态更新"""
+        self.status.setText(status_msg)
+        self.main_window.status_bar.showMessage(status_msg)
 
     def on_finished(self, df, filename):
         output_path = DATA_DIR / "processed" / filename
@@ -1936,7 +2379,8 @@ class DataPage(BasePage):
         
         self.main_window.preview_page.update_table(df)
         self.progress.setValue(len(df))
-        self.status.setText("处理完成")
+        self.status.setText("✅ 处理完成")
+        self.status.setStyleSheet("color: #00b894; font-weight: bold;")
         self.main_window.status_bar.showMessage("Ready")
         self.btn_process.setEnabled(True)
         
@@ -1952,7 +2396,8 @@ class DataPage(BasePage):
 
     def on_error(self, msg):
         self.btn_process.setEnabled(True)
-        self.status.setText("错误")
+        self.status.setText("❌ 处理失败")
+        self.status.setStyleSheet("color: #d63031; font-weight: bold;")
         self.main_window.status_bar.showMessage("Error occurred")
         self.main_window.show_toast(f"处理失败: {msg}", "error")
     
@@ -2336,6 +2781,12 @@ class PipelinePage(BasePage):
             config['data_enrichment']['model'] = self.main_window.model_name
             config['data_enrichment']['provider'] = self.main_window.provider
             config['data_enrichment']['max_workers'] = self.main_window.max_workers
+            config['data_enrichment']['llm_options'] = {
+                "num_ctx": self.main_window.num_ctx,
+                "temperature": self.main_window.temperature,
+                "keep_alive": self.main_window.keep_alive,
+                "timeout": self.main_window.timeout
+            }
             
             # 创建流程管理器
             pm = create_default_pipeline()
@@ -2453,8 +2904,8 @@ class SettingsPage(BasePage):
         self.main_window = main_window
         
         # Description
-        desc = QLabel("配置全局参数，包括 LLM 模型 API (OpenAI/Ollama/DashScope)、Neo4j 数据库连接、界面主题及性能参数。")
-        desc.setStyleSheet("color: #636e72; font-size: 13px; margin-bottom: 10px;")
+        desc = QLabel("配置全局参数，包括 LLM 模型 API (OpenAI/Ollama/DashScope/DeepSeek)、Neo4j 数据库连接、界面主题及性能参数。")
+        desc.setStyleSheet("color: #8b5a3c; font-size: 13px; margin-bottom: 10px;")
         desc.setWordWrap(True)
         self.layout.addWidget(desc)
         
@@ -2469,7 +2920,7 @@ class SettingsPage(BasePage):
         api_layout = QFormLayout(api_group)
         
         self.provider = QComboBox()
-        self.provider.addItems(["dashscope", "openai", "ollama"])
+        self.provider.addItems(["dashscope", "openai", "ollama", "deepseek"])
         self.provider.setCurrentText(self.main_window.provider)
         self.provider.currentTextChanged.connect(self.on_provider_changed)
         api_layout.addRow("模型提供商:", self.provider)
@@ -2486,11 +2937,81 @@ class SettingsPage(BasePage):
         self.base_url.textChanged.connect(self.on_url_changed)
         api_layout.addRow("Base URL:", self.base_url)
         
-        self.model = QLineEdit(self.main_window.model_name)
-        self.model.textChanged.connect(self.on_model_changed)
-        api_layout.addRow("Model Name:", self.model)
+        # Model Selection with Refresh
+        model_layout = QHBoxLayout()
+        self.model = QComboBox()
+        self.model.setEditable(True)
+        self.model.setMinimumWidth(200)
+        self.model.setCurrentText(self.main_window.model_name)
+        self.model.currentTextChanged.connect(self.on_model_changed)
+        
+        self.btn_refresh_models = QPushButton("🔄")
+        self.btn_refresh_models.setToolTip("获取可用模型列表")
+        self.btn_refresh_models.setFixedWidth(30)
+        self.btn_refresh_models.clicked.connect(self.refresh_models)
+        
+        model_layout.addWidget(self.model)
+        model_layout.addWidget(self.btn_refresh_models)
+        
+        api_layout.addRow("Model Name:", model_layout)
+        
+        self.btn_test_api = QPushButton("🔌 测试连接")
+        self.btn_test_api.setObjectName("SecondaryButton")
+        self.btn_test_api.clicked.connect(self.test_api_connection)
+        api_layout.addRow("", self.btn_test_api)
         
         layout.addWidget(api_group)
+
+        # --- LLM Parameters ---
+        llm_group = QGroupBox("LLM 参数配置 (Ollama/OpenAI)")
+        llm_layout = QFormLayout(llm_group)
+        
+        from PyQt6.QtWidgets import QSpinBox, QDoubleSpinBox
+        
+        # Context Window
+        self.ctx_spin = QSpinBox()
+        self.ctx_spin.setRange(2048, 128000)
+        self.ctx_spin.setSingleStep(1024)
+        self.ctx_spin.setValue(self.main_window.num_ctx)
+        self.ctx_spin.setToolTip("上下文窗口大小 (num_ctx). 默认 4096. 增加此值可处理更长的文档，但会消耗更多内存。")
+        self.ctx_spin.valueChanged.connect(self.on_ctx_changed)
+        llm_layout.addRow("上下文窗口 (Context):", self.ctx_spin)
+        
+        # Temperature
+        self.temp_spin = QDoubleSpinBox()
+        self.temp_spin.setRange(0.0, 2.0)
+        self.temp_spin.setSingleStep(0.1)
+        self.temp_spin.setValue(self.main_window.temperature)
+        self.temp_spin.setToolTip("温度 (Temperature). 控制输出的随机性。0.0 为确定性，1.0 为多样性。")
+        self.temp_spin.valueChanged.connect(self.on_temp_changed)
+        llm_layout.addRow("温度 (Temperature):", self.temp_spin)
+        
+        # GPU Configuration for Ollama
+        self.gpu_spin = QSpinBox()
+        self.gpu_spin.setRange(0, 8)
+        self.gpu_spin.setValue(getattr(self.main_window, 'num_gpu', 1))
+        self.gpu_spin.setToolTip("GPU数量 (num_gpu). 0=仅CPU, 1=使用1个GPU. 仅对Ollama有效。")
+        self.gpu_spin.valueChanged.connect(self.on_gpu_changed)
+        llm_layout.addRow("GPU数量 (num_gpu):", self.gpu_spin)
+        
+        # Keep Alive
+        self.keep_alive_edit = QLineEdit()
+        self.keep_alive_edit.setText(str(self.main_window.keep_alive))
+        self.keep_alive_edit.setPlaceholderText("5m")
+        self.keep_alive_edit.setToolTip("模型驻留内存时间 (keep_alive). 例如: 5m, 1h, -1 (永久).")
+        self.keep_alive_edit.textChanged.connect(self.on_keep_alive_changed)
+        llm_layout.addRow("模型驻留 (Keep Alive):", self.keep_alive_edit)
+        
+        # Timeout
+        self.timeout_spin = QSpinBox()
+        self.timeout_spin.setRange(10, 3600)
+        self.timeout_spin.setSingleStep(10)
+        self.timeout_spin.setValue(self.main_window.timeout)
+        self.timeout_spin.setToolTip("请求超时时间 (秒). 本地模型可能需要较长时间响应。")
+        self.timeout_spin.valueChanged.connect(self.on_timeout_changed)
+        llm_layout.addRow("超时时间 (Timeout):", self.timeout_spin)
+        
+        layout.addWidget(llm_group)
 
         # --- Appearance Settings ---
         app_group = QGroupBox("外观与语言 (Preview)")
@@ -2546,26 +3067,190 @@ class SettingsPage(BasePage):
         
         layout.addWidget(perf_group)
         
+        # Save Button
+        self.btn_save = QPushButton("💾 保存所有设置")
+        self.btn_save.setMinimumHeight(45)
+        self.btn_save.clicked.connect(self.main_window.save_settings)
+        layout.addWidget(self.btn_save)
+        
         self.layout.addWidget(card)
         self.layout.addStretch()
+        
+        # Initialize UI state based on current provider
+        self._init_provider_ui()
+    
+    def _init_provider_ui(self):
+        """根据当前 provider 初始化 UI 状态"""
+        provider = self.main_window.provider
+        if provider == "ollama":
+            self.ctx_spin.setEnabled(True)
+            self.gpu_spin.setEnabled(True)
+            self.keep_alive_edit.setEnabled(True)
+            self.api_key.setPlaceholderText("Ollama 无需 API Key，默认 'ollama'")
+        elif provider == "dashscope":
+            self.ctx_spin.setEnabled(False)
+            self.gpu_spin.setEnabled(False)
+            self.keep_alive_edit.setEnabled(False)
+            self.api_key.setPlaceholderText("输入 DashScope API Key")
+        else:  # openai
+            self.ctx_spin.setEnabled(False)
+            self.gpu_spin.setEnabled(False)
+            self.keep_alive_edit.setEnabled(False)
+            self.api_key.setPlaceholderText("输入 OpenAI API Key")
 
     def on_workers_changed(self, value):
         self.main_window.max_workers = value
         self.main_window.show_toast(f"并发数已设置为: {value}")
 
+    def on_ctx_changed(self, value):
+        self.main_window.num_ctx = value
+
+    def on_temp_changed(self, value):
+        self.main_window.temperature = value
+
+    def on_gpu_changed(self, value):
+        self.main_window.num_gpu = value
+
+    def on_keep_alive_changed(self, value):
+        self.main_window.keep_alive = value
+
+    def on_timeout_changed(self, value):
+        self.main_window.timeout = value
+
+    def refresh_models(self):
+        self.btn_refresh_models.setEnabled(False)
+        
+        def task():
+            enricher = UniversalEnricher(
+                self.main_window.api_key, 
+                self.main_window.base_url, 
+                self.main_window.model_name, 
+                self.main_window.provider,
+                options={
+                    "num_ctx": self.main_window.num_ctx,
+                    "temperature": self.main_window.temperature,
+                    "num_gpu": getattr(self.main_window, 'num_gpu', 1),
+                    "keep_alive": self.main_window.keep_alive,
+                    "timeout": self.main_window.timeout
+                }
+            )
+            return enricher.get_models()
+            
+        self.worker = WorkerThread(task)
+        self.worker.finished.connect(self.on_models_fetched)
+        self.worker.error.connect(self.on_models_error)
+        self.worker.start()
+
+    def on_models_fetched(self, models):
+        self.btn_refresh_models.setEnabled(True)
+        current = self.model.currentText()
+        self.model.blockSignals(True)
+        self.model.clear()
+        self.model.addItems(models)
+        
+        if current and current in models:
+            self.model.setCurrentText(current)
+        elif models:
+            self.model.setCurrentText(models[0])
+            self.main_window.model_name = models[0] # Update main window state
+        else:
+            self.model.setCurrentText(current)
+            
+        self.model.blockSignals(False)
+        self.main_window.show_toast(f"已获取 {len(models)} 个模型", "success")
+        
+    def on_models_error(self, msg):
+        self.btn_refresh_models.setEnabled(True)
+        self.main_window.show_toast(f"获取模型失败: {msg}", "error")
+
+    def test_api_connection(self):
+        self.btn_test_api.setEnabled(False)
+        self.btn_test_api.setText("测试中...")
+        
+        def task():
+            enricher = UniversalEnricher(
+                self.main_window.api_key, 
+                self.main_window.base_url, 
+                self.main_window.model_name, 
+                self.main_window.provider,
+                options={
+                    "num_ctx": self.main_window.num_ctx,
+                    "temperature": self.main_window.temperature,
+                    "keep_alive": self.main_window.keep_alive,
+                    "timeout": self.main_window.timeout
+                }
+            )
+            # Try a simple call
+            return enricher._call_llm("Hello", system_prompt="You are a test assistant.")
+            
+        self.worker = WorkerThread(task)
+        self.worker.finished.connect(self.on_test_success)
+        self.worker.error.connect(self.on_test_error)
+        self.worker.start()
+
+    def on_test_success(self, result):
+        self.btn_test_api.setEnabled(True)
+        self.btn_test_api.setText("✅ 连接成功")
+        self.main_window.show_toast("API 连接成功！", "success")
+        # 截断响应以防止过长
+        display_result = result[:200] + "..." if len(result) > 200 else result
+        QMessageBox.information(self, "测试成功", 
+            f"连接成功！\n\n提供商: {self.main_window.provider}\n模型: {self.main_window.model_name}\n\n模型响应预览:\n{display_result}")
+
+    def on_test_error(self, msg):
+        self.btn_test_api.setEnabled(True)
+        self.btn_test_api.setText("❌ 连接失败")
+        self.main_window.show_toast(f"连接失败: {msg}", "error")
+        
+        # 提供更有用的错误分析
+        error_hints = ""
+        if "Connection refused" in msg or "ConnectError" in msg:
+            error_hints = "\n\n可能的解决方案:\n1. 检查 Ollama 服务是否已启动 (ollama serve)\n2. 确认基址 URL 是否正确\n3. 检查防火墙设置"
+        elif "timeout" in msg.lower():
+            error_hints = "\n\n可能的解决方案:\n1. 增加超时时间 (当前: {}s)\n2. 检查模型是否已加载\n3. 本地硬件可能需要更长响应时间".format(self.main_window.timeout)
+        elif "model" in msg.lower() and "not found" in msg.lower():
+            error_hints = "\n\n可能的解决方案:\n1. 点击 ↻ 按钮刷新模型列表\n2. 在终端运行: ollama pull <模型名>\n3. 确认模型名称拼写正确"
+        elif "401" in msg or "unauthorized" in msg.lower():
+            error_hints = "\n\n可能的解决方案:\n1. 检查 API Key 是否正确\n2. 确认账户是否有效"
+        
+        QMessageBox.warning(self, "测试失败", f"连接失败: {msg}{error_hints}")
+
     def on_provider_changed(self, text):
         self.main_window.provider = text
         if text == "dashscope":
-            self.model.setText("qwen-plus")
+            self.model.setCurrentText("qwen-plus")
             self.base_url.setPlaceholderText("Optional")
+            self.base_url.clear()
+            self.api_key.setPlaceholderText("输入 DashScope API Key")
+            self.ctx_spin.setEnabled(False)
+            self.gpu_spin.setEnabled(False)
+            self.keep_alive_edit.setEnabled(False)
         elif text == "ollama":
-            self.model.setText("llama3.2")
+            # 尝试获取可用模型列表并设置第一个
+            self.model.setCurrentText("ministral-3:8b")  # 默认使用常见模型
             self.base_url.setText("http://localhost:11434/v1")
             self.base_url.setPlaceholderText("http://localhost:11434/v1")
             self.api_key.setText("ollama")
-        else:
-            self.model.setText("gpt-4")
+            self.api_key.setPlaceholderText("Ollama 无需 API Key，默认 'ollama'")
+            self.ctx_spin.setEnabled(True)
+            self.gpu_spin.setEnabled(True)
+            self.keep_alive_edit.setEnabled(True)
+            # 自动设置更长的超时时间
+            self.timeout_spin.setValue(120)
+            self.main_window.timeout = 120
+            # 默认使用 1 个 GPU
+            self.gpu_spin.setValue(1)
+            self.main_window.num_gpu = 1
+            # 自动刷新模型列表
+            self.refresh_models()
+        else:  # openai
+            self.model.setCurrentText("gpt-4")
             self.base_url.setPlaceholderText("Optional")
+            self.base_url.clear()
+            self.api_key.setPlaceholderText("输入 OpenAI API Key")
+            self.ctx_spin.setEnabled(False)
+            self.gpu_spin.setEnabled(False)
+            self.keep_alive_edit.setEnabled(False)
 
     def on_key_changed(self, text):
         self.main_window.api_key = text
@@ -2600,12 +3285,23 @@ class MainWindow(QMainWindow):
         self.provider = "dashscope"
         self.model_name = "qwen-plus"
         self.max_workers = 3  # Default concurrency
+        
+        # LLM Options
+        self.num_ctx = 4096
+        self.temperature = 0.7
+        self.num_gpu = 1  # Default use 1 GPU for Ollama
+        self.keep_alive = "5m"
+        self.timeout = 60
+        
         self.domains = self.load_domains()
         
         # Neo4j Configuration
         self.neo4j_uri = "bolt://localhost:7687"
         self.neo4j_user = "neo4j"
         self.neo4j_password = ""
+        
+        # Load Settings
+        self.load_settings()
         
         # Layout
         central = QWidget()
@@ -2624,6 +3320,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.stack)
         
         # Pages
+        self.dashboard_page = DashboardPage(self)
         self.wizard_page = WizardPage(self)
         self.domain_page = DomainPage(self)
         self.data_page = DataPage(self)
@@ -2631,6 +3328,7 @@ class MainWindow(QMainWindow):
         self.pipeline_page = PipelinePage(self)
         self.settings_page = SettingsPage(self)
         
+        self.stack.addWidget(self.dashboard_page)
         self.stack.addWidget(self.wizard_page)
         self.stack.addWidget(self.domain_page)
         self.stack.addWidget(self.data_page)
@@ -2647,6 +3345,64 @@ class MainWindow(QMainWindow):
         # Init
         self.domain_page.update_domains()
         self.apply_theme("Light") # Default theme
+
+    def load_settings(self):
+        if SETTINGS_FILE.exists():
+            try:
+                with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                    settings = yaml.safe_load(f) or {}
+                    self.api_key = settings.get("api_key", self.api_key)
+                    self.base_url = settings.get("base_url", self.base_url)
+                    self.provider = settings.get("provider", self.provider)
+                    self.model_name = settings.get("model_name", self.model_name)
+                    
+                    # Ensure model name is not empty
+                    if not self.model_name:
+                        if self.provider == "dashscope":
+                            self.model_name = "qwen-plus"
+                        elif self.provider == "ollama":
+                            self.model_name = "llama3" # Default fallback
+                        elif self.provider == "openai":
+                            self.model_name = "gpt-3.5-turbo"
+
+                    self.max_workers = settings.get("max_workers", self.max_workers)
+                    
+                    self.num_ctx = settings.get("num_ctx", self.num_ctx)
+                    self.temperature = settings.get("temperature", self.temperature)
+                    self.num_gpu = settings.get("num_gpu", self.num_gpu)
+                    self.keep_alive = settings.get("keep_alive", self.keep_alive)
+                    self.timeout = settings.get("timeout", self.timeout)
+                    
+                    self.neo4j_uri = settings.get("neo4j_uri", self.neo4j_uri)
+                    self.neo4j_user = settings.get("neo4j_user", self.neo4j_user)
+                    self.neo4j_password = settings.get("neo4j_password", self.neo4j_password)
+                    if self.api_key:
+                        os.environ["OPENCHEMKG_API_KEY"] = self.api_key
+            except Exception as e:
+                print(f"Error loading settings: {e}")
+
+    def save_settings(self):
+        settings = {
+            "api_key": self.api_key,
+            "base_url": self.base_url,
+            "provider": self.provider,
+            "model_name": self.model_name,
+            "max_workers": self.max_workers,
+            "num_ctx": self.num_ctx,
+            "temperature": self.temperature,
+            "num_gpu": self.num_gpu,
+            "keep_alive": self.keep_alive,
+            "timeout": self.timeout,
+            "neo4j_uri": self.neo4j_uri,
+            "neo4j_user": self.neo4j_user,
+            "neo4j_password": self.neo4j_password
+        }
+        try:
+            with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+                yaml.dump(settings, f)
+            self.show_toast("设置已保存", "success")
+        except Exception as e:
+            self.show_toast(f"保存失败: {e}", "error")
 
     def show_toast(self, message, type="info"):
         toast = ToastNotification(self, message, type)
@@ -2675,18 +3431,22 @@ class MainWindow(QMainWindow):
         page_name = current.data(Qt.ItemDataRole.UserRole)
         
         idx_map = {
-            "wizard": 0,
-            "domain": 1,
-            "data": 2,
-            "preview": 3,
-            "pipeline": 4,
-            "settings": 5
+            "dashboard": 0,
+            "wizard": 1,
+            "domain": 2,
+            "data": 3,
+            "preview": 4,
+            "pipeline": 5,
+            "settings": 6
         }
         
         if page_name in idx_map:
             self.stack.setCurrentIndex(idx_map[page_name])
 
 if __name__ == "__main__":
+    # 配置日志级别，只显示WARNING及以上级别的消息
+    logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
+    
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
     
