@@ -1,6 +1,6 @@
 project:
   name: "Universal Chemical Knowledge Graph"
-  version: "0.1.0"
+  version: "0.3.0"
   description: "Open Source Chemical Knowledge Graph Construction Pipeline"
 
 paths:
@@ -20,7 +20,7 @@ modules:
     input_file: "data/interim/cleaned_data.csv"
     output_file: "data/interim/enriched_data.csv"
     api:
-      provider: "dashscope" # or "openai", "gemini"
+      provider: "dashscope" # or "openai", "gemini", "ollama", "deepseek"
       model: "qwen-plus"
       # api_key: "YOUR_API_KEY" # Set via environment variable OPENCHEMKG_API_KEY
       

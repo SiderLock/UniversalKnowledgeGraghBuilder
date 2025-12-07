@@ -1,15 +1,214 @@
+computer_hardware_knowledge:
+  description: 我想构建一个电脑硬件产品的知识库，属性包括名称，发布年份，发售价格（RMB），厂商等
+  prompts:
+    system: 你是一个知识图谱构建专家，擅长提取和组织结构化信息。
+    user_template: 请为实体 '{{entity_name}}' 提供详细的属性信息，返回JSON格式。
+  schema:
+    attributes:
+    - description: The full name of the hardware product.
+      name: product_name
+    - description: The year the product was initially released.
+      name: release_year
+    - description: The retail price of the product in RMB.
+      name: launch_price_rmb
+    - description: The company that produced the hardware product.
+      name: manufacturer
+    - description: The specific processor model (e.g., Intel Core i7-13700K).
+      name: processor_model
+    - description: The specific graphics card model (e.g., NVIDIA GeForce RTX 4080).
+      name: graphics_card_model
+    - description: The type of storage device used (e.g., SSD, HDD).
+      name: storage_type
+    - description: The amount of RAM in gigabytes.
+      name: memory_capacity_gb
+    - description: The speed of the RAM in MHz.
+      name: memory_speed_mhz
+    - description: The physical form factor of the product (e.g., ATX, Micro-ATX).
+      name: form_factor
+    - description: Whether the product has RGB lighting capabilities.
+      name: rgb_lighting
+    - description: The available ports and connectivity options (e.g., USB, HDMI).
+      name: connectivity
+    - description: The power consumption of the product.
+      name: wattage
+    - description: The type of cooling solution used (e.g., air cooler, liquid cooler).
+      name: cooling_solution
+    entity_type: hardware_product
+deepseek_programming_knowledge:
+  description: 编程技术知识图谱，包括编程语言、框架、工具、算法等相关信息
+  prompts:
+    system: 你是一位资深的编程技术专家，擅长分析和整理编程相关的知识。请提供准确、实用的技术信息，以JSON格式输出。
+    user_template: "请提供关于\"{entity_name}\"的详细编程技术信息，以JSON格式返回：\n\n需要包含的属性：{attributes}\n\
+      \n请按以下格式输出：\n{\n  \"entity_name\": \"{entity_name}\",\n  \"attributes\": [\n\
+      \    {\"name\": \"名称 (Name)\", \"value\": \"...\"},\n    {\"name\": \"类型 (Type)\"\
+      , \"value\": \"...\"},\n    {\"name\": \"版本 (Version)\", \"value\": \"...\"\
+      },\n    {\"name\": \"发布时间 (Release Date)\", \"value\": \"...\"},\n    {\"name\"\
+      : \"开发者 (Developer)\", \"value\": \"...\"},\n    {\"name\": \"语言 (Language)\"\
+      , \"value\": \"...\"},\n    {\"name\": \"平台 (Platform)\", \"value\": \"...\"\
+      },\n    {\"name\": \"主要特性 (Key Features)\", \"value\": \"...\"},\n    {\"name\"\
+      : \"应用场景 (Use Cases)\", \"value\": \"...\"},\n    {\"name\": \"学习难度 (Learning\
+      \ Curve)\", \"value\": \"...\"},\n    {\"name\": \"生态系统 (Ecosystem)\", \"value\"\
+      : \"...\"},\n    {\"name\": \"优缺点 (Pros & Cons)\", \"value\": \"...\"}\n  ],\n\
+      \  \"data_source\": \"DeepSeek模型知识库\"\n}\n\n请提供准确详细的技术信息：\n"
+  schema:
+    attributes:
+    - description: 编程技术的正式名称
+      name: 名称 (Name)
+    - description: 技术类型，如编程语言、框架、库、工具等
+      name: 类型 (Type)
+    - description: 当前稳定版本或主要版本
+      name: 版本 (Version)
+    - description: 首次发布或最新版本的发布时间
+      name: 发布时间 (Release Date)
+    - description: 主要开发者、组织或公司
+      name: 开发者 (Developer)
+    - description: 使用的编程语言或支持的编程语言
+      name: 语言 (Language)
+    - description: 支持的操作系统或运行平台
+      name: 平台 (Platform)
+    - description: 核心功能和技术特色
+      name: 主要特性 (Key Features)
+    - description: 典型的应用场景和用途
+      name: 应用场景 (Use Cases)
+    - description: 学习和掌握的难易程度
+      name: 学习难度 (Learning Curve)
+    - description: 相关的工具、库和社区生态
+      name: 生态系统 (Ecosystem)
+    - description: 技术的优势和局限性
+      name: 优缺点 (Pros & Cons)
+    entity_type: 编程技术
+  source_instruction: ''
 domains:
   chemical:
-    description: "化学品数据补全与知识图谱构建"
-    schema:
-      entity_type: "Chemical"
-      attributes:
-        - name: "物理性质"
-          description: "如熔点、沸点、外观等"
-        - name: "危险性"
-          description: "GHS分类、运输危险性等"
-        - name: "用途"
-          description: "工业、医药、科研等用途"
+    description: 化学品数据补全与知识图谱构建
     prompts:
-      system: "你是一个专业的化学专家，负责完善化学品数据库。"
-      user_template: "请提供化学品 '{entity_name}' 的以下信息：{attributes}。请以JSON格式返回，key为属性名，value为属性值。如果信息不确定，请留空。"
+      system: 你是一个专业的化学专家，负责完善化学品数据库。
+      user_template: 请提供化学品 '{entity_name}' 的以下信息：{attributes}。请以JSON格式返回，key为属性名，value为属性值。如果信息不确定，请留空。
+    schema:
+      attributes:
+      - description: 如熔点、沸点、外观等
+        name: 物理性质
+      - description: GHS分类、运输危险性等
+        name: 危险性
+      - description: 工业、医药、科研等用途
+        name: 用途
+      entity_type: Chemical
+pc_hardware_database:
+  description: 构建PC硬件设备知识图谱，包括CPU、GPU、主板、内存、存储等硬件的详细技术规格和市场信息
+  prompts:
+    system: 你是一位专业的PC硬件专家，熟悉各种硬件产品的技术规格、性能参数和市场定位。请提供准确的硬件信息，以JSON格式输出。
+    user_template: "请提供关于\"{entity_name}\"的详细硬件信息，以JSON格式返回：\n\n需要包含的属性：{attributes}\n\n请按以下格式输出：\n{\n  \"entity_name\": \"{entity_name}\",\n  \"attributes\": [\n    {\"name\": \"product_name\", \"value\": \"完整产品名称\"},\n    {\"name\": \"component_type\", \"value\": \"硬件类型\"},\n    {\"name\": \"manufacturer\", \"value\": \"制造商\"},\n    {\"name\": \"model_number\", \"value\": \"型号\"},\n    {\"name\": \"release_year\", \"value\": \"发布年份\"},\n    {\"name\": \"release_price_rmb\", \"value\": \"发售价格（人民币）\"},\n    {\"name\": \"socket_type\", \"value\": \"接口类型\"},\n    {\"name\": \"tdp\", \"value\": \"功耗（瓦特）\"},\n    {\"name\": \"specifications\", \"value\": \"详细技术规格\"}\n  ],\n  \"data_source\": \"DeepSeek硬件知识库\"\n}\n\n请提供准确详细的硬件信息：\n"
+  schema:
+    attributes:
+    - description: 硬件产品的完整正式名称
+      name: product_name
+    - description: 硬件类型，如CPU、GPU、主板、内存、存储设备、机箱、散热器等
+      name: component_type
+    - description: 硬件制造商，如Intel、AMD、NVIDIA等
+      name: manufacturer
+    - description: 具体的产品型号
+      name: model_number
+    - description: 产品首次发布的年份
+      name: release_year
+    - description: 产品发售时的建议零售价（人民币）
+      name: release_price_rmb
+    - description: 当前市场价格（人民币）
+      name: current_price_rmb
+    - description: 接口类型，如LGA1700、AM5、PCIe等
+      name: socket_type
+    - description: 热设计功耗（瓦特）
+      name: tdp
+    - description: 工作频率、核心数量等性能参数
+      name: clock_speeds
+    - description: 内存容量（GB）
+      name: memory_capacity_gb
+    - description: 兼容的主板型号列表
+      name: supported_motherboards
+    - description: 支持的操作系统
+      name: supported_operating_systems
+    - description: 物理规格，如ATX、ITX等
+      name: form_factor
+    - description: 详细的技术规格和特性描述
+      name: specifications
+    entity_type: PC硬件设备
+  source_instruction: ''
+personal_computer_hardware:
+  description: 我想构建一个有关个人计算机硬件具体设备的知识库，属性包含 名称，厂商，售价等
+  prompts:
+    system: 你是一个知识图谱构建专家，擅长提取和组织结构化信息。
+    user_template: 请为实体 '{{entity_name}}' 提供详细的属性信息，返回JSON格式。
+  schema:
+    attributes:
+    - description: 硬件设备的完整名称
+      name: name
+    - description: 生产该硬件的厂商名称
+      name: manufacturer
+    - description: 当前市场售价（建议货币单位）
+      name: price
+    - description: 硬件分类（如CPU、GPU、内存等）
+      name: category
+    - description: 产品发布日期
+      name: release_date
+    - description: 关键规格参数（如频率、容量、接口等）
+      name: specifications
+    - description: 功耗信息
+      name: power_consumption
+    - description: 兼容的平台或接口
+      name: compatibility
+    - description: 保修期限
+      name: warranty_period
+    - description: 物理尺寸
+      name: dimensions
+    - description: 产品重量
+      name: weight
+    entity_type: HardwareComponent
+traditional_chinese_medicine_material:
+  description: '我想构建一个关于中药材的知识图谱，包括中药的名称、功效、配伍、产地等信息，请你帮我写一个prompt
+
+    ，最好提供12种属性'
+  prompts:
+    system: 你是一位经验丰富的中医药专家。请根据要求提供准确的中药材信息，以JSON格式输出。
+    user_template: "请提供关于\"{entity_name}\"的详细中医药信息，以JSON格式返回：\n\n需要包含的属性：{attributes}\n\
+      \n请按以下格式输出：\n{{\n  \"entity_name\": \"{entity_name}\",\n  \"attributes\": [\n\
+      \    {{\"name\": \"名称 (Name)\", \"value\": \"...\"}},\n    {{\"name\": \"拼音\
+      \ (Pinyin)\", \"value\": \"...\"}},\n    {{\"name\": \"性味归经 (Nature & Properties)\"\
+      , \"value\": \"...\"}},\n    {{\"name\": \"功效 (Indications)\", \"value\": \"\
+      ...\"}},\n    {{\"name\": \"配伍 (Compatibility)\", \"value\": \"...\"}},\n  \
+      \  {{\"name\": \"产地 (Origin)\", \"value\": \"...\"}},\n    {{\"name\": \"采收加工\
+      \ (Harvesting & Processing)\", \"value\": \"...\"}},\n    {{\"name\": \"农时 (Pharmacopoeial\
+      \ Time)\", \"value\": \"...\"}},\n    {{\"name\": \"感官特征 (Sensory Characteristics)\"\
+      , \"value\": \"...\"}},\n    {{\"name\": \"典故 (Historical References)\", \"\
+      value\": \"...\"}},\n    {{\"name\": \"现代研究 (Modern Research)\", \"value\":\
+      \ \"...\"}},\n    {{\"name\": \"相似药物 (Similar Herbs)\", \"value\": \"...\"}},\n\
+      \    {{\"name\": \"禁忌 (Contraindications)\", \"value\": \"...\"}}\n  ],\n  \"\
+      data_source\": \"模型知识库\"\n}}\n\n请提供准确详细的信息：\n"
+  schema:
+    attributes:
+    - description: 中药材的中文或拉丁名称。
+      name: 名称 (Name)
+    - description: 中药材的拼音规范。
+      name: 拼音 (Pinyin)
+    - description: 中药材的性味特征，例如性寒性热、苦、甘、辛、酸等。
+      name: 性味归经 (Nature & Properties)
+    - description: 中药材的药用效果，例如补肾、健脾、清热等。
+      name: 功效 (Indications)
+    - description: 中药材与其他中药材搭配使用时所产生的协同或拮抗作用。
+      name: 配伍 (Compatibility)
+    - description: 中药材的生长地域，例如省、市、县。
+      name: 产地 (Origin)
+    - description: 中药材的采收时间、部位和加工方法。
+      name: 采收加工 (Harvesting & Processing)
+    - description: 根据《本草纲目》或相关医书的采收时令.
+      name: 农时 (Pharmacopoeial Time)
+    - description: 用眼、用嗅、用味等方法判断中药材真伪和质量的特征。
+      name: 感官特征 (Sensory Characteristics)
+    - description: 本品在《本草纲目》、《伤寒杂病论》等经典医书中出现的记载或典故。
+      name: 典故 (Historical References)
+    - description: 关于本品现代药理学研究的成果。
+      name: 现代研究 (Modern Research)
+    - description: 与本品功效相似的其他中药材，以及辨别它们的依据。
+      name: 相似药物 (Similar Herbs)
+    - description: 本品的使用禁忌，例如与某些药物或身体状况不相容的情况。
+      name: 禁忌 (Contraindications)
+    entity_type: 中药材
+  source_instruction: ''

@@ -1,0 +1,13 @@
+api_key: sk-6322d92d267349368fc756bf78f18ebf
+base_url: ''
+keep_alive: 5m
+max_workers: 3
+model_name: deepseek-chat
+neo4j_password: ''
+neo4j_uri: bolt://localhost:7687
+neo4j_user: neo4j
+num_ctx: 2048
+num_gpu: 1
+provider: deepseek
+temperature: 0.5
+timeout: 600
