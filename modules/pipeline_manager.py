@@ -569,7 +569,8 @@ def data_enrichment_handler(input_data, config, checkpoint_manager, checkpoint, 
         api_key=api_key,
         base_url=enrichment_config.get('base_url'),
         model=enrichment_config.get('model', 'qwen-plus'),
-        provider=enrichment_config.get('provider', 'dashscope')
+        provider=enrichment_config.get('provider', 'dashscope'),
+        options=enrichment_config.get('llm_options')
     )
     
     # 如果 input_data 是 DataFrame，直接使用
