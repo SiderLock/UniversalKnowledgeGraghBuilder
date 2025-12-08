@@ -5,6 +5,7 @@ import pandas as pd
 import logging
 from pathlib import Path
 from datetime import datetime
+from typing import Dict, Any
 import getpass
 import platform
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
@@ -14,7 +15,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QGroupBox, QFormLayout, QFrame, QSizePolicy, QStyleFactory, 
                              QGraphicsDropShadowEffect, QStackedWidget, QListWidget, 
                              QListWidgetItem, QScrollArea, QCheckBox, QTabWidget,
-                             QSpinBox, QSlider, QToolButton, QPlainTextEdit)
+                             QSpinBox, QSlider, QToolButton, QPlainTextEdit, QGridLayout)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QFont, QIcon, QPalette, QColor, QAction
 
@@ -22,6 +23,9 @@ from PyQt6.QtGui import QFont, QIcon, QPalette, QColor, QAction
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from modules.universal_enricher import UniversalEnricher
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 # Constants
 CONFIG_DIR = Path("config")
@@ -184,45 +188,45 @@ DEFAULT_CHEMICAL_PROMPT = """
 # --- Styles ---
 class Theme:
     LIGHT = {
-        "bg_main": "#fef7f0",       # 温暖的奶白背景
+        "bg_main": "#f8f9fa",       # 更现代的浅灰背景
         "bg_card": "#ffffff",       # 纯白卡片
         "bg_sidebar": "#ffffff",    # 侧边栏背景
-        "text_main": "#2d1810",     # 深褐色主文本
-        "text_secondary": "#8b5a3c", # 温暖的次要文本
-        "text_muted": "#b8856f",    # 弱化文本（浅暖褐色）
-        "accent": "#f59e42",        # 金山橙主色调
-        "accent_hover": "#e8873a",  # 悬停状态橙色
-        "border": "#f5dcc9",        # 温暖的边框色
-        "input_bg": "#fef9f5",      # 输入框背景
-        "selection": "#fef1e6",     # 选中背景（晨曦粉）
-        "selection_text": "#f59e42",# 选中文本
-        "danger": "#e74c3c",        # 危险色保持
-        "danger_hover": "#c0392b",  # 危险色悬停
-        "scroll_bg": "#fef7f0",
-        "scroll_handle": "#d4a574",  # 滚动条
-        "success": "#27ae60",       # 成功色
-        "warning": "#f39c12"        # 警告色
+        "text_main": "#212529",     # 深灰主文本
+        "text_secondary": "#495057", # 次要文本
+        "text_muted": "#adb5bd",    # 弱化文本
+        "accent": "#0d6efd",        # 现代蓝
+        "accent_hover": "#0b5ed7",  # 悬停状态
+        "border": "#dee2e6",        # 边框色
+        "input_bg": "#ffffff",      # 输入框背景
+        "selection": "#e7f1ff",     # 选中背景
+        "selection_text": "#0d6efd",# 选中文本
+        "danger": "#dc3545",        # 危险色
+        "danger_hover": "#bb2d3b",  # 危险色悬停
+        "scroll_bg": "#f8f9fa",
+        "scroll_handle": "#ced4da", # 滚动条
+        "success": "#198754",       # 成功色
+        "warning": "#ffc107"        # 警告色
     }
     
     DARK = {
-        "bg_main": "#1a1310",       # 深暖棕背景
-        "bg_card": "#2d1f17",       # 卡片背景（深暖色）
-        "bg_sidebar": "#221a14",    # 侧边栏背景
-        "text_main": "#f5e6d3",     # 主文本（优化的温暖米白色）
-        "text_secondary": "#d4b896", # 次要文本（优化的暖沙色）
-        "text_muted": "#a08670",    # 弱化文本（温暖灰褐色）
-        "accent": "#f59e42",        # 金山橙主色调
-        "accent_hover": "#ffb366",  # 悬停状态（更亮橙色）
-        "border": "#3d2b1f",        # 边框颜色（深暖棕）
-        "input_bg": "#2d1f17",      # 输入框背景
-        "selection": "#4d3528",     # 选中背景（晨雾蓝暗调）
-        "selection_text": "#ffb366",# 选中文本
-        "danger": "#e74c3c",        # 危险色
-        "danger_hover": "#ec7063",  # 危险色悬停
-        "scroll_bg": "#1a1310",
-        "scroll_handle": "#5d4a3a",  # 滚动条
-        "success": "#27ae60",       # 成功色
-        "warning": "#f39c12"        # 警告色
+        "bg_main": "#212529",       # 深色背景
+        "bg_card": "#2c3034",       # 卡片背景
+        "bg_sidebar": "#2c3034",    # 侧边栏背景
+        "text_main": "#f8f9fa",     # 主文本
+        "text_secondary": "#dee2e6", # 次要文本
+        "text_muted": "#6c757d",    # 弱化文本
+        "accent": "#0d6efd",        # 现代蓝
+        "accent_hover": "#0b5ed7",  # 悬停状态
+        "border": "#495057",        # 边框颜色
+        "input_bg": "#343a40",      # 输入框背景
+        "selection": "#0a58ca",     # 选中背景
+        "selection_text": "#ffffff",# 选中文本
+        "danger": "#dc3545",        # 危险色
+        "danger_hover": "#bb2d3b",  # 危险色悬停
+        "scroll_bg": "#212529",
+        "scroll_handle": "#495057", # 滚动条
+        "success": "#198754",       # 成功色
+        "warning": "#ffc107"        # 警告色
     }
 
 class ModernStyle:
@@ -235,7 +239,7 @@ class ModernStyle:
             background-color: {colors['bg_main']};
         }}
         QWidget {{
-            font-family: 'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            font-family: 'Segoe UI', 'Microsoft YaHei UI', sans-serif;
             font-size: 14px;
             color: {colors['text_main']};
         }}
@@ -245,14 +249,14 @@ class ModernStyle:
             background-color: {colors['bg_sidebar']};
             border: none;
             outline: none;
-            padding: 12px;
+            padding: 10px;
             border-right: 1px solid {colors['border']};
         }}
         QListWidget::item {{
-            height: 52px;
-            border-radius: 10px;
-            padding-left: 16px;
-            margin-bottom: 6px;
+            height: 40px;
+            border-radius: 6px;
+            padding-left: 10px;
+            margin-bottom: 2px;
             color: {colors['text_secondary']};
             font-weight: 500;
         }}
@@ -260,7 +264,6 @@ class ModernStyle:
             background-color: {colors['selection']};
             color: {colors['selection_text']};
             font-weight: 600;
-            border-left: 4px solid {colors['accent']};
         }}
         QListWidget::item:hover {{
             background-color: {colors['bg_main']};
@@ -270,7 +273,7 @@ class ModernStyle:
         /* Cards/Containers */
         QFrame#Card {{
             background-color: {colors['bg_card']};
-            border-radius: 16px;
+            border-radius: 8px;
             border: 1px solid {colors['border']};
         }}
         
@@ -279,8 +282,8 @@ class ModernStyle:
             background-color: {colors['accent']};
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
+            border-radius: 4px;
+            padding: 6px 12px;
             font-weight: 600;
             font-size: 13px;
         }}
@@ -289,16 +292,22 @@ class ModernStyle:
         }}
         QPushButton:pressed {{
             background-color: {colors['accent']};
-            margin-top: 1px;
+            padding-top: 7px;
+            padding-bottom: 5px;
+        }}
+        QPushButton:disabled {{
+            background-color: {colors['border']};
+            color: {colors['text_muted']};
         }}
         QPushButton#SecondaryButton {{
             background-color: transparent;
             border: 1px solid {colors['border']};
-            color: {colors['text_main']};
+            color: {colors['text_secondary']};
         }}
         QPushButton#SecondaryButton:hover {{
             background-color: {colors['bg_main']};
-            border-color: {colors['text_secondary']};
+            border-color: {colors['accent']};
+            color: {colors['accent']};
         }}
         QPushButton#DangerButton {{
             background-color: {colors['danger']};
@@ -317,15 +326,107 @@ class ModernStyle:
         }}
 
         /* Inputs */
-        QLineEdit, QTextEdit, QComboBox, QPlainTextEdit {{
+        QLineEdit, QTextEdit, QPlainTextEdit {{
             border: 1px solid {colors['border']};
             border-radius: 6px;
             padding: 8px;
             background-color: {colors['input_bg']};
             color: {colors['text_main']};
+            selection-background-color: {colors['selection']};
+            selection-color: {colors['selection_text']};
         }}
-        QLineEdit:focus, QTextEdit:focus, QComboBox:focus {{
-            border: 2px solid {colors['accent']};
+        QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {{
+            border: 1px solid {colors['accent']};
+            background-color: {colors['bg_card']};
+        }}
+
+        /* ComboBox */
+        QComboBox {{
+            border: 1px solid {colors['border']};
+            border-radius: 6px;
+            padding: 6px 10px;
+            background-color: {colors['input_bg']};
+            color: {colors['text_main']};
+            min-width: 6em;
+        }}
+        QComboBox:hover {{
+            border-color: {colors['accent']};
+        }}
+        QComboBox::drop-down {{
+            subcontrol-origin: padding;
+            subcontrol-position: top right;
+            width: 20px;
+            border-left-width: 0px;
+        }}
+        QComboBox QAbstractItemView {{
+            border: 1px solid {colors['border']};
+            background-color: {colors['bg_card']};
+            selection-background-color: {colors['selection']};
+            selection-color: {colors['selection_text']};
+            outline: none;
+        }}
+
+        /* GroupBox */
+        QGroupBox {{
+            border: 1px solid {colors['border']};
+            border-radius: 8px;
+            margin-top: 1.2em;
+            padding-top: 10px; 
+            font-weight: 600;
+            color: {colors['text_secondary']};
+        }}
+        QGroupBox::title {{
+            subcontrol-origin: margin;
+            subcontrol-position: top left;
+            padding: 0 5px;
+            left: 10px;
+        }}
+
+        /* TabWidget */
+        QTabWidget::pane {{
+            border: 1px solid {colors['border']};
+            border-radius: 6px;
+            background-color: {colors['bg_card']};
+        }}
+        QTabBar::tab {{
+            background: {colors['bg_main']};
+            color: {colors['text_secondary']};
+            padding: 8px 16px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            margin-right: 2px;
+        }}
+        QTabBar::tab:selected {{
+            background: {colors['bg_card']};
+            color: {colors['accent']};
+            border-bottom: 2px solid {colors['accent']};
+            font-weight: bold;
+        }}
+        QTabBar::tab:hover {{
+            color: {colors['text_main']};
+        }}
+
+        /* ProgressBar */
+        QProgressBar {{
+            border: none;
+            background-color: {colors['border']};
+            border-radius: 4px;
+            text-align: center;
+            color: white;
+        }}
+        QProgressBar::chunk {{
+            background-color: {colors['accent']};
+            border-radius: 4px;
+        }}
+
+        /* ToolTip */
+        QToolTip {{
+            border: 1px solid {colors['border']};
+            background-color: {colors['bg_card']};
+            color: {colors['text_main']};
+            padding: 4px;
+            border-radius: 4px;
+            opacity: 230;
         }}
 
         /* Tables */
@@ -336,18 +437,19 @@ class ModernStyle:
             gridline-color: {colors['border']};
             color: {colors['text_main']};
             selection-background-color: {colors['selection']};
-            selection-color: {colors['text_main']};
+            selection-color: {colors['selection_text']};
+            alternate-background-color: {colors['bg_main']};
         }}
         QHeaderView::section {{
             background-color: {colors['bg_main']};
-            padding: 12px;
+            padding: 8px;
             border: none;
-            border-bottom: 2px solid {colors['border']};
-            font-weight: bold;
-            color: {colors['text_main']};
+            border-bottom: 1px solid {colors['border']};
+            font-weight: 600;
+            color: {colors['text_secondary']};
         }}
         QTableWidget::item {{
-            padding: 8px;
+            padding: 6px;
         }}
 
         /* Scrollbar */
@@ -356,18 +458,23 @@ class ModernStyle:
             background: {colors['scroll_bg']};
             width: 8px;
             border-radius: 4px;
+            margin: 0px;
         }}
         QScrollBar::handle:vertical {{
             background: {colors['scroll_handle']};
             border-radius: 4px;
+            min-height: 20px;
         }}
         QScrollBar::handle:vertical:hover {{
-            background: {colors['text_secondary']};
+            background: {colors['accent']};
+        }}
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+            height: 0px;
         }}
         
         /* Status Bar */
         QStatusBar {{
-            background-color: {colors['bg_card']};
+            background-color: {colors['bg_main']};
             color: {colors['text_secondary']};
             border-top: 1px solid {colors['border']};
         }}
@@ -403,29 +510,42 @@ class ToastNotification(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(20, 10, 20, 10)
+        layout.setContentsMargins(24, 12, 24, 12)
         
+        # Add icon based on type (using emoji for simplicity)
+        icon_map = {"info": "ℹ️", "success": "✅", "error": "❌", "warning": "⚠️"}
+        icon_label = QLabel(icon_map.get(type, "ℹ️"))
+        icon_label.setStyleSheet("font-size: 16px; margin-right: 8px; color: white; background: transparent;")
+        layout.addWidget(icon_label)
+
         self.label = QLabel(message)
-        self.label.setStyleSheet("color: white; font-weight: bold;")
+        self.label.setStyleSheet("color: white; font-weight: 600; font-size: 14px; background: transparent;")
         layout.addWidget(self.label)
         
-        color = "#0984e3" # Info
-        if type == "success": color = "#00b894"
-        elif type == "error": color = "#d63031"
-        elif type == "warning": color = "#fdcb6e"
+        color = "#0d6efd" # Info
+        if type == "success": color = "#198754"
+        elif type == "error": color = "#dc3545"
+        elif type == "warning": color = "#ffc107"
         
         self.setStyleSheet(f"""
             QWidget {{
                 background-color: {color};
-                border-radius: 20px;
+                border-radius: 8px;
             }}
         """)
+        
+        # Shadow effect
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 60))
+        shadow.setOffset(0, 4)
+        self.setGraphicsEffect(shadow)
         
         # Animation
         self.opacity_anim = QPropertyAnimation(self, b"windowOpacity")
         self.opacity_anim.setDuration(300)
         self.opacity_anim.setStartValue(0.0)
-        self.opacity_anim.setEndValue(0.9)
+        self.opacity_anim.setEndValue(1.0)
         self.opacity_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.opacity_anim.start()
         
@@ -450,52 +570,38 @@ class Sidebar(QWidget):
         
         # Logo Area
         logo_frame = QFrame()
-        logo_frame.setFixedHeight(100)
+        logo_frame.setFixedHeight(80)
         logo_layout = QHBoxLayout(logo_frame)
-        logo_layout.setContentsMargins(24, 24, 24, 24)
+        logo_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Logo Icon (Text based for now, but styled)
+        # Logo Icon
         logo_icon = QLabel("🌐")
         logo_icon.setStyleSheet("""
-            font-size: 32px;
-            background-color: #f59e42;
+            font-size: 24px;
+            background-color: #0d6efd;
             color: white;
-            border-radius: 16px;
-            padding: 8px;
+            border-radius: 8px;
+            padding: 4px;
         """)
         logo_layout.addWidget(logo_icon)
         
         logo_text_layout = QVBoxLayout()
-        logo_text_layout.setSpacing(2)
+        logo_text_layout.setSpacing(0)
         logo_title = QLabel("Universal KG")
         logo_title.setStyleSheet("""
-            font-size: 20px; 
+            font-size: 18px; 
             font-weight: 800; 
-            font-family: 'Segoe UI Black';
-            color: #f59e42;
+            font-family: 'Segoe UI', sans-serif;
         """)
-        logo_subtitle = QLabel("Builder v0.3.0")
-        logo_subtitle.setStyleSheet("font-size: 12px; color: #c29d7a; font-weight: 500;")
+        logo_subtitle = QLabel("Builder v0.5.0")
+        logo_subtitle.setStyleSheet("font-size: 11px; color: #0d6efd; font-weight: 600; margin-top: 2px;")
         
         logo_text_layout.addWidget(logo_title)
         logo_text_layout.addWidget(logo_subtitle)
         logo_layout.addLayout(logo_text_layout)
         logo_layout.addStretch()
         
-        # 添加微妙的分隔线
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setStyleSheet("""
-            QFrame {
-                background-color: #f5dcc9;
-                border: none;
-                height: 1px;
-                margin: 8px 16px;
-            }
-        """)
-        
         layout.addWidget(logo_frame)
-        layout.addWidget(separator)
         
         # Navigation List
         self.nav_list = QListWidget()
@@ -521,62 +627,64 @@ class Sidebar(QWidget):
         self.nav_list.setCurrentRow(0)
         layout.addWidget(self.nav_list)
         
-        # User Profile / Status Area with enhanced styling
-        user_frame = QFrame()
-        user_frame.setFixedHeight(85)
-        user_frame.setStyleSheet("""
-            QFrame {
-                border-top: 1px solid #f5dcc9;
-                background-color: #fef7f0;
-            }
-        """) 
-        user_layout = QHBoxLayout(user_frame)
-        user_layout.setContentsMargins(20, 12, 20, 12)
+        # Theme Toggle & User Profile
+        bottom_frame = QFrame()
+        bottom_frame.setStyleSheet("border-top: 1px solid #dee2e6;")
+        bottom_layout = QVBoxLayout(bottom_frame)
+        bottom_layout.setContentsMargins(16, 16, 16, 16)
+        bottom_layout.setSpacing(12)
+
+        # Theme Toggle
+        theme_layout = QHBoxLayout()
+        theme_label = QLabel("深色模式")
+        theme_label.setStyleSheet("font-size: 12px; font-weight: 600;")
         
+        self.theme_toggle = QCheckBox()
+        self.theme_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.theme_toggle.toggled.connect(self.toggle_theme)
+        
+        theme_layout.addWidget(theme_label)
+        theme_layout.addStretch()
+        theme_layout.addWidget(self.theme_toggle)
+        bottom_layout.addLayout(theme_layout)
+        
+        # User Info
+        user_layout = QHBoxLayout()
         avatar = QLabel("👤")
         avatar.setStyleSheet("""
-            font-size: 24px; 
-            background-color: #f59e42;
-            color: white;
-            border-radius: 20px; 
-            padding: 8px;
-            border: 2px solid #f5dcc9;
+            font-size: 20px; 
+            background-color: #e7f1ff;
+            color: #0d6efd;
+            border-radius: 18px; 
+            padding: 6px;
         """)
         avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        avatar.setFixedSize(44, 44)
+        avatar.setFixedSize(36, 36)
         
         user_info = QVBoxLayout()
-        user_info.setSpacing(2)
+        user_info.setSpacing(0)
         
-        # 获取真实用户名
         current_user = getpass.getuser()
-        system_name = platform.system()
-        
         user_name = QLabel(current_user)
         user_name.setStyleSheet("font-weight: bold; font-size: 13px;")
         
-        # 实时时间显示
-        current_time = datetime.now().strftime("%H:%M")
-        user_status = QLabel(f"{system_name} • {current_time}")
-        user_status.setStyleSheet("color: #27ae60; font-size: 11px; font-weight: 500;")
+        status_lbl = QLabel("Online")
+        status_lbl.setStyleSheet("color: #198754; font-size: 11px;")
         
         user_info.addWidget(user_name)
-        user_info.addWidget(user_status)
+        user_info.addWidget(status_lbl)
         
         user_layout.addWidget(avatar)
         user_layout.addLayout(user_info)
-        
-        # 添加状态指示器
-        status_indicator = QLabel("•")
-        status_indicator.setStyleSheet("""
-            color: #27ae60;
-            font-size: 16px;
-            font-weight: bold;
-        """)
-        user_layout.addWidget(status_indicator)
         user_layout.addStretch()
         
-        layout.addWidget(user_frame)
+        bottom_layout.addLayout(user_layout)
+        layout.addWidget(bottom_frame)
+
+    def toggle_theme(self, checked):
+        window = self.window()
+        if hasattr(window, 'apply_theme'):
+            window.apply_theme("Dark" if checked else "Light")
 
 class SchemaEditor(QWidget):
     def __init__(self):
@@ -674,20 +782,20 @@ class VariableButton(QPushButton):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet("""
             QPushButton {
-                background-color: #e3f2fd;
-                color: #1976d2;
-                border: 1px solid #90caf9;
+                background-color: #fff3e0;
+                color: #e67e22;
+                border: 1px solid #ffcc80;
                 border-radius: 4px;
                 padding: 2px 8px;
                 font-size: 12px;
                 font-family: 'Consolas', 'Courier New', monospace;
             }
             QPushButton:hover {
-                background-color: #bbdefb;
-                border-color: #64b5f6;
+                background-color: #ffe0b2;
+                border-color: #ffb74d;
             }
             QPushButton:pressed {
-                background-color: #90caf9;
+                background-color: #ffcc80;
             }
         """)
         self.clicked.connect(self.insert_variable)
@@ -1106,7 +1214,7 @@ class DashboardPage(BasePage):
         welcome_card.setStyleSheet("""
             QFrame#Card {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                    stop:0 #f59e42, stop:0.4 #ff7f7f, stop:0.8 #c8a2c8, stop:1 #87ceeb);
+                    stop:0 #0d6efd, stop:1 #0dcaf0);
                 border: none;
                 border-radius: 18px;
             }
@@ -1154,49 +1262,65 @@ class DashboardPage(BasePage):
         stats_layout.setSpacing(20)
         
         # 动态生成统计数据
-        import random
-        processed_count = random.randint(800, 2000)
         domain_count = len(self.main_window.domains) if hasattr(self.main_window, 'domains') else 0
-        api_calls = f"{random.randint(8, 25)}.{random.randint(1, 9)}k"
-        storage_size = f"{random.randint(25, 120)} MB"
+        
+        # 计算已处理的CSV文件数量
+        data_dir = Path("data/generated")
+        csv_files = list(data_dir.glob("*.csv")) if data_dir.exists() else []
+        processed_files = len(csv_files)
+        
+        # 计算缓存文件大小
+        cache_dir = Path("data/cache")
+        cache_size = 0
+        if cache_dir.exists():
+            for f in cache_dir.rglob("*"):
+                if f.is_file():
+                    cache_size += f.stat().st_size
+        cache_size_mb = cache_size / (1024 * 1024)
+        
+        # API 配置状态
+        api_status = "已配置" if self.main_window.api_key else "未配置"
+        api_color = "#198754" if self.main_window.api_key else "#dc3545"
         
         stats = [
-            ("📦 已处理实体", f"{processed_count:,}", "↑ 8.5%"),
-            ("🏷️ 领域配置", str(domain_count), "已就绪" if domain_count > 0 else "待配置"),
-            ("⚡ API 调用", api_calls, "本月"),
-            ("💾 存储占用", storage_size, "本地缓存")
+            ("🏷️ 领域配置", str(domain_count), "已创建" if domain_count > 0 else "待创建"),
+            ("📊 数据文件", str(processed_files), "已生成"),
+            ("⚙️ API 配置", api_status, self.main_window.provider if self.main_window.api_key else "请前往设置"),
+            ("💾 缓存占用", f"{cache_size_mb:.1f} MB", "本地存储")
         ]
         
-        for label, value, sub in stats:
+        for idx, (label, value, sub) in enumerate(stats):
             card = QFrame()
             card.setObjectName("Card")
             card.setMinimumWidth(190)
             card.setStyleSheet("""
                 QFrame#Card {
                     background-color: white;
-                    border: 1px solid #f5dcc9;
+                    border: 1px solid #dee2e6;
                     border-radius: 14px;
                 }
                 QFrame#Card:hover {
-                    border-color: #f59e42;
+                    border-color: #0d6efd;
                 }
             """)
             card_layout = QVBoxLayout(card)
             card_layout.setContentsMargins(24, 20, 24, 20)
             
             lbl = QLabel(label)
-            lbl.setStyleSheet("color: #8b5a3c; font-size: 13px; font-weight: 600;")
+            lbl.setStyleSheet("color: #6c757d; font-size: 13px; font-weight: 600;")
             
             val = QLabel(value)
-            val.setStyleSheet("font-size: 32px; font-weight: 800; margin: 8px 0; color: #2d1810;")
+            val.setStyleSheet("font-size: 32px; font-weight: 800; margin: 8px 0; color: #212529;")
             
             # 根据数据类型设置不同颜色
-            if "↑" in sub:
-                sub_color = "#27ae60"  # 绿色表示增长
-            elif "已就绪" in sub:
-                sub_color = "#f59e42"  # 金山橙表示正常
+            if idx == 2:  # API 配置
+                sub_color = api_color
+            elif "已创建" in sub or "已生成" in sub:
+                sub_color = "#198754"  # 绿色表示完成
+            elif "待创建" in sub:
+                sub_color = "#ffc107"  # 黄色表示待处理
             else:
-                sub_color = "#8b5a3c"  # 暖灰色表示中性
+                sub_color = "#6c757d"  # 灰色表示中性
                 
             sub_lbl = QLabel(sub)
             sub_lbl.setStyleSheet(f"color: {sub_color}; font-size: 12px; font-weight: 600;")
@@ -1208,65 +1332,162 @@ class DashboardPage(BasePage):
             
         self.layout.addLayout(stats_layout)
         
-        # Quick Actions with enhanced styling
-        action_section = QFrame()
-        action_section_layout = QVBoxLayout(action_section)
-        action_section_layout.setSpacing(16)
+        # Domain List Section
+        domain_section = QFrame()
+        domain_section_layout = QVBoxLayout(domain_section)
+        domain_section_layout.setSpacing(16)
+        domain_section_layout.setContentsMargins(0, 20, 0, 0)
         
-        action_header = QHBoxLayout()
-        action_label = QLabel("🚀 快捷操作")
-        action_label.setStyleSheet("""
+        domain_header = QHBoxLayout()
+        domain_label = QLabel("📚 领域概览")
+        domain_label.setStyleSheet("""
             font-size: 20px; 
             font-weight: 700; 
-            margin-top: 20px;
             color: #2d1810;
         """)
-        action_desc = QLabel("选择以下操作快速开始您的项目")
-        action_desc.setStyleSheet("color: #8b5a3c; font-size: 14px; margin-top: 24px;")
+        domain_header.addWidget(domain_label)
+        domain_header.addStretch()
+        domain_section_layout.addLayout(domain_header)
         
-        action_header.addWidget(action_label)
-        action_header.addStretch()
-        action_section_layout.addLayout(action_header)
-        action_section_layout.addWidget(action_desc)
-        
-        actions_layout = QHBoxLayout()
-        actions_layout.setSpacing(20)
-        
-        actions = [
-            ("🚀 新建向导", "启动 AI 助手", lambda: self.main_window.sidebar.nav_list.setCurrentRow(1)),
-            ("📂 导入数据", "处理 CSV 文件", lambda: self.main_window.sidebar.nav_list.setCurrentRow(3)),
-            ("⚙️ 系统设置", "配置 API Key", lambda: self.main_window.sidebar.nav_list.setCurrentRow(6))
-        ]
-        
-        for title, desc, callback in actions:
-            btn = QPushButton()
-            btn.setObjectName("Card") # Use Card style for button base
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setMinimumHeight(120)
-            btn.setStyleSheet("""
-                QPushButton {
-                    text-align: left;
-                    padding: 24px;
-                    border: 1px solid #f5dcc9;
+        # Domain cards container
+        if domain_count > 0:
+            domains_grid = QGridLayout()
+            domains_grid.setSpacing(16)
+            domains_grid.setContentsMargins(0, 8, 0, 0)
+            
+            for idx, (domain_name, domain_config) in enumerate(list(self.main_window.domains.items())[:6]):
+                domain_card = QFrame()
+                domain_card.setObjectName("DomainCard")
+                domain_card.setStyleSheet("""
+                    QFrame#DomainCard {
+                        background-color: white;
+                        border: 1px solid #f5dcc9;
+                        border-radius: 12px;
+                        padding: 16px;
+                    }
+                    QFrame#DomainCard:hover {
+                        border-color: #f59e42;
+                        background-color: #fef9f5;
+                    }
+                """)
+                domain_card.setMinimumHeight(100)
+                domain_card_layout = QVBoxLayout(domain_card)
+                domain_card_layout.setSpacing(8)
+                
+                # 领域名称
+                name_label = QLabel(f"🔹 {domain_name}")
+                name_label.setStyleSheet("font-size: 15px; font-weight: 700; color: #2d1810;")
+                
+                # 领域描述
+                description = domain_config.get("description", "暂无描述")
+                if len(description) > 80:
+                    description = description[:80] + "..."
+                desc_label = QLabel(description)
+                desc_label.setStyleSheet("font-size: 12px; color: #636e72; margin-top: 4px;")
+                desc_label.setWordWrap(True)
+                
+                # 属性数量
+                attr_count = len(domain_config.get("schema", {}).get("attributes", []))
+                attr_label = QLabel(f"属性数量: {attr_count}")
+                attr_label.setStyleSheet("font-size: 11px; color: #8b5a3c; margin-top: 4px; font-weight: 600;")
+                
+                domain_card_layout.addWidget(name_label)
+                domain_card_layout.addWidget(desc_label)
+                domain_card_layout.addWidget(attr_label)
+                domain_card_layout.addStretch()
+                
+                row = idx // 3
+                col = idx % 3
+                domains_grid.addWidget(domain_card, row, col)
+            
+            domain_section_layout.addLayout(domains_grid)
+        else:
+            # 空状态提示
+            empty_state = QFrame()
+            empty_state.setStyleSheet("""
+                QFrame {
+                    background-color: #fef9f5;
+                    border: 2px dashed #f5dcc9;
                     border-radius: 12px;
-                    background-color: #ffffff;
-                    font-weight: 500;
-                }
-                QPushButton:hover {
-                    border-color: #f59e42;
-                    background-color: #fef1e6;
+                    padding: 40px;
                 }
             """)
+            empty_layout = QVBoxLayout(empty_state)
+            empty_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
             
-            # 我们需要一个自定义布局在按钮内部，但QPushButton在这种情况下不容易直接支持布局，无需子类化。
-            # 所以我们将使用HTML格式化或使用简单方法。
-            # 让我们现在使用一个简单的方法：
-            btn.setText(f"{title}\n\n{desc}")
-            btn.clicked.connect(callback)
-            actions_layout.addWidget(btn)
+            empty_icon = QLabel("📋")
+            empty_icon.setStyleSheet("font-size: 48px;")
+            empty_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
             
-        action_section_layout.addLayout(actions_layout)
-        self.layout.addWidget(action_section)
+            empty_text = QLabel("暂无领域配置")
+            empty_text.setStyleSheet("font-size: 16px; font-weight: 600; color: #8b5a3c; margin-top: 12px;")
+            empty_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            empty_hint = QLabel("使用「智能领域向导」或「领域管理」创建您的第一个领域")
+            empty_hint.setStyleSheet("font-size: 13px; color: #b2bec3; margin-top: 8px;")
+            empty_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            empty_layout.addWidget(empty_icon)
+            empty_layout.addWidget(empty_text)
+            empty_layout.addWidget(empty_hint)
+            
+            domain_section_layout.addWidget(empty_state)
+        
+        self.layout.addWidget(domain_section)
+        
+        # Recent Activity Section
+        activity_section = QFrame()
+        activity_section_layout = QVBoxLayout(activity_section)
+        activity_section_layout.setSpacing(12)
+        activity_section_layout.setContentsMargins(0, 20, 0, 0)
+        
+        activity_header = QLabel("📊 系统状态")
+        activity_header.setStyleSheet("""
+            font-size: 20px; 
+            font-weight: 700; 
+            color: #2d1810;
+        """)
+        activity_section_layout.addWidget(activity_header)
+        
+        # 状态信息卡片
+        status_card = QFrame()
+        status_card.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #f5dcc9;
+                border-radius: 12px;
+                padding: 20px;
+            }
+        """)
+        status_layout = QVBoxLayout(status_card)
+        status_layout.setSpacing(10)
+        
+        # 系统信息
+        system_info = [
+            ("🟢 LLM 服务", f"{self.main_window.provider} - {self.main_window.model_name}" if self.main_window.api_key else "未配置"),
+            ("⏱️ 速率限制", f"RPM: {self.main_window.rpm} | TPM: {self.main_window.tpm}" if hasattr(self.main_window, 'rpm') else "未设置"),
+            ("📁 工作目录", str(Path.cwd())),
+        ]
+        
+        for icon_text, value in system_info:
+            info_row = QHBoxLayout()
+            info_label = QLabel(icon_text)
+            info_label.setStyleSheet("font-size: 13px; font-weight: 600; color: #8b5a3c;")
+            info_label.setMinimumWidth(120)
+            
+            info_value = QLabel(value)
+            info_value.setStyleSheet("font-size: 13px; color: #636e72;")
+            info_value.setWordWrap(True)
+            
+            info_row.addWidget(info_label)
+            info_row.addWidget(info_value)
+            info_row.addStretch()
+            
+            status_layout.addLayout(info_row)
+        
+        activity_section_layout.addWidget(status_card)
+        self.layout.addWidget(activity_section)
+        
         self.layout.addStretch()
 
 class WizardPage(BasePage):
@@ -1353,8 +1574,9 @@ class WizardPage(BasePage):
         config_layout = QHBoxLayout()
         
         config_layout.addWidget(QLabel("生成实体数量:"))
-        self.entity_count = QLineEdit("10")
+        self.entity_count = QLineEdit("20")
         self.entity_count.setMaximumWidth(100)
+        self.entity_count.setPlaceholderText("1-1000")
         config_layout.addWidget(self.entity_count)
         
         config_layout.addWidget(QLabel("领域名称:"))
@@ -1399,98 +1621,191 @@ class WizardPage(BasePage):
         self.attr_list.clear()
         
         def task():
-            enricher = UniversalEnricher(self.main_window.api_key, self.main_window.base_url,
-                                       self.main_window.model_name, self.main_window.provider,
-                                       options={
-                                           "num_ctx": self.main_window.num_ctx,
-                                           "temperature": self.main_window.temperature,
-                                           "keep_alive": self.main_window.keep_alive,
-                                           "timeout": self.main_window.timeout
-                                       })
-            
-            # 构建分析提示词
-            analysis_prompt = f"""
-请分析以下领域描述，并提供推荐：
+            try:
+                enricher = UniversalEnricher(self.main_window.api_key, self.main_window.base_url,
+                                           self.main_window.model_name, self.main_window.provider,
+                                           options={
+                                               "num_ctx": self.main_window.num_ctx,
+                                               "temperature": self.main_window.temperature,
+                                               "keep_alive": self.main_window.keep_alive,
+                                               "timeout": self.main_window.timeout
+                                           },
+                                           rpm=self.main_window.rpm,
+                                           tpm=self.main_window.tpm,
+                                           tpd=self.main_window.tpd)
+                
+                # 简洁的分析提示词
+                analysis_prompt = f"""分析领域"{description}"，返回JSON。
 
-领域描述：{description}
-
-请以JSON格式返回以下信息：
-1. recommended_entities: 该领域的10-15个代表性实体示例（列表）
-2. recommended_attributes: 该领域实体应该包含的关键属性列表，每个属性包含name和description
-3. domain_name: 推荐的英文领域名称（小写，用下划线分隔）
-4. entity_type: 实体类型的英文名称
-
-返回格式：
+直接输出（不要```包裹）：
 {{
-    "domain_name": "domain_name",
-    "entity_type": "EntityType",
-    "recommended_entities": ["实体1", "实体2", ...],
-    "recommended_attributes": [
-        {{"name": "属性名", "description": "属性说明"}},
-        ...
-    ]
+  "domain_name": "英文名_小写下划线",
+  "entity_type": "EntityType",
+  "recommended_entities": ["实体1", "实体2", "实体3", "实体4", "实体5", "实体6", "实体7", "实体8", "实体9", "实体10"],
+  "recommended_attributes": [
+    {{"name": "属性1", "description": "说明1"}},
+    {{"name": "属性2", "description": "说明2"}},
+    {{"name": "属性3", "description": "说明3"}},
+    {{"name": "属性4", "description": "说明4"}},
+    {{"name": "属性5", "description": "说明5"}}
+  ]
 }}
-"""
-            
-            # 调用LLM
-            if self.main_window.provider == "dashscope":
-                import dashscope
-                from dashscope import Generation
-                dashscope.api_key = self.main_window.api_key
-                response = Generation.call(
-                    model=self.main_window.model_name,
-                    prompt=analysis_prompt
-                )
-                if response.status_code == 200:
-                    import json
-                    import re
-                    content = response.output.text
-                    # 提取JSON
-                    json_match = re.search(r'\{.*\}', content, re.DOTALL)
-                    if json_match:
-                        return json.loads(json_match.group())
-                    return json.loads(content)
-            else:
-                # OpenAI compatible (包括 openai 和 ollama)
-                # 使用 UniversalEnricher 的 _call_llm 方法统一处理
-                response_text = enricher._call_llm(analysis_prompt, json_mode=True)
-                import json
-                import re
-                # 清理并解析 JSON
-                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-                if json_match:
-                    return json.loads(json_match.group())
-                return json.loads(response_text)
+
+要求：提供10-15个实体，5-8个属性。只输出JSON。"""
+                
+                logger.info(f"开始分析领域: {description[:50]}...")
+                
+                # 调用LLM
+                if self.main_window.provider == "dashscope":
+                    import dashscope
+                    from dashscope import Generation
+                    dashscope.api_key = self.main_window.api_key
+                    response = Generation.call(
+                        model=self.main_window.model_name,
+                        prompt=analysis_prompt
+                    )
+                    if response.status_code == 200:
+                        content = response.output.text
+                        logger.info(f"LLM响应: {content[:500]}")
+                        result = self._parse_analysis_result(content)
+                        return result
+                    else:
+                        raise Exception(f"API调用失败: {response.message}")
+                else:
+                    # OpenAI compatible (包括 openai, ollama, deepseek, kimi)
+                    response_text = enricher._call_llm(analysis_prompt, json_mode=False)
+                    logger.info(f"LLM响应: {response_text[:500] if response_text else 'Empty'}")
+                    result = self._parse_analysis_result(response_text)
+                    return result
+                    
+            except Exception as e:
+                logger.error(f"领域分析失败: {str(e)}", exc_info=True)
+                raise
         
         self.worker = WorkerThread(task)
         self.worker.finished.connect(self.on_analysis_complete)
         self.worker.error.connect(self.on_analysis_error)
         self.worker.start()
     
+    def _parse_analysis_result(self, text: str) -> Dict:
+        """解析领域分析结果"""
+        import json
+        import re
+        
+        if not text:
+            return {}
+        
+        text = text.strip()
+        
+        # 策略1: 直接解析
+        try:
+            return json.loads(text)
+        except:
+            pass
+        
+        # 策略2: 移除markdown
+        cleaned = re.sub(r'```json\s*', '', text)
+        cleaned = re.sub(r'```\s*', '', cleaned)
+        cleaned = cleaned.strip()
+        try:
+            return json.loads(cleaned)
+        except:
+            pass
+        
+        # 策略3: 提取JSON块
+        match = re.search(r'\{[\s\S]*\}', text)
+        if match:
+            try:
+                return json.loads(match.group())
+            except:
+                pass
+        
+        # 策略4: 修复常见问题
+        fixed = text
+        fixed = fixed.replace('"', '"').replace('"', '"')
+        fixed = re.sub(r',(\s*[}\]])', r'\1', fixed)
+        if '{' in fixed:
+            start = fixed.find('{')
+            end = fixed.rfind('}')
+            if start != -1 and end > start:
+                fixed = fixed[start:end+1]
+                try:
+                    return json.loads(fixed)
+                except:
+                    pass
+        
+        logger.error(f"所有解析策略都失败，原始文本: {text[:500]}")
+        return {}
+    
     def on_analysis_complete(self, result):
         self.btn_analyze.setEnabled(True)
         self.btn_analyze.setText("🔍 AI 分析并推荐")
         
+        # 详细记录结果
+        logger.info(f"收到分析结果，类型: {type(result)}, 内容: {result}")
+        
+        # 检查结果有效性
+        if not result or not isinstance(result, dict):
+            self.main_window.show_toast("分析结果无效", "error")
+            logger.error(f"无效的分析结果: {result}")
+            return
+        
         # 显示实体推荐
         entities = result.get("recommended_entities", [])
-        self.entity_list.setText("\n".join([f"• {e}" for e in entities]))
+        logger.info(f"获取到的实体列表: {entities}")
+        
+        if entities:
+            self.entity_list.setText("\n".join([f"• {e}" for e in entities]))
+            logger.info(f"成功获取 {len(entities)} 个推荐实体")
+        else:
+            self.entity_list.setText("❌ 未能生成实体推荐\n\n可能原因：\n1. LLM 未返回 recommended_entities 字段\n2. 返回的数据格式不正确\n3. 领域描述不够清晰\n\n建议：\n• 提供更详细的领域描述\n• 查看日志文件了解详情\n• 尝试不同的 LLM 模型")
+            logger.warning(f"未获取到推荐实体，完整结果: {result}")
         
         # 显示属性推荐
         attributes = result.get("recommended_attributes", [])
-        attr_text = "\n".join([f"• {a['name']}: {a.get('description', '')}" for a in attributes])
-        self.attr_list.setText(attr_text)
+        logger.info(f"获取到的属性列表: {attributes}")
+        
+        if attributes:
+            try:
+                attr_lines = []
+                for a in attributes:
+                    if isinstance(a, dict) and 'name' in a:
+                        name = a['name']
+                        desc = a.get('description', '')
+                        attr_lines.append(f"• {name}: {desc}")
+                    else:
+                        logger.warning(f"属性格式异常: {a}")
+                
+                if attr_lines:
+                    self.attr_list.setText("\n".join(attr_lines))
+                    logger.info(f"成功获取 {len(attr_lines)} 个推荐属性")
+                else:
+                    self.attr_list.setText("❌ 属性数据格式错误")
+            except Exception as e:
+                logger.error(f"处理属性推荐时出错: {e}", exc_info=True)
+                self.attr_list.setText(f"❌ 处理属性时出错: {str(e)}")
+        else:
+            self.attr_list.setText("❌ 未能生成属性推荐\n\n可能原因：\n1. LLM 未返回 recommended_attributes 字段\n2. 返回的数据格式不正确\n\n建议：\n• 查看日志文件了解 LLM 的实际返回内容\n• 尝试修改领域描述使其更具体")
+            logger.warning(f"未获取到推荐属性，完整结果: {result}")
         
         # 自动填充领域名称
         domain_name = result.get("domain_name", "")
-        self.domain_name_input.setText(domain_name)
+        if domain_name:
+            self.domain_name_input.setText(domain_name)
+        else:
+            logger.warning("未获取到领域名称")
         
         # 保存结果供后续使用
         self.analysis_result = result
         
-        # 启用生成按钮
-        self.btn_generate_dataset.setEnabled(True)
+        # 只有在有实体和属性时才启用生成按钮
+        if entities and attributes:
+            self.btn_generate_dataset.setEnabled(True)
+            self.main_window.show_toast("AI分析完成", "success")
+        else:
+            self.main_window.show_toast("分析结果不完整，请检查日志并重试", "warning")
         
-        self.main_window.show_toast("AI分析完成", "success")
+        logger.info(f"分析完成 - 实体: {len(entities)}, 属性: {len(attributes)}, 领域名: {domain_name}")
     
     def on_analysis_error(self, msg):
         self.btn_analyze.setEnabled(True)
@@ -1509,8 +1824,8 @@ class WizardPage(BasePage):
         
         try:
             count = int(self.entity_count.text())
-            if count <= 0 or count > 100:
-                self.main_window.show_toast("实体数量应该在1-100之间", "warning")
+            if count <= 0 or count > 1000:
+                self.main_window.show_toast("实体数量应该在1-1000之间", "warning")
                 return
         except ValueError:
             self.main_window.show_toast("请输入有效的数字", "warning")
@@ -1535,7 +1850,10 @@ class WizardPage(BasePage):
                                            "temperature": self.main_window.temperature,
                                            "keep_alive": self.main_window.keep_alive,
                                            "timeout": self.main_window.timeout
-                                       })
+                                       },
+                                       rpm=self.main_window.rpm,
+                                       tpm=self.main_window.tpm,
+                                       tpd=self.main_window.tpd)
             
             # 准备Schema和Prompt
             result = self.analysis_result
@@ -1547,8 +1865,7 @@ class WizardPage(BasePage):
             # 生成实体列表
             base_entities = result.get("recommended_entities", [])
             if not base_entities:
-                self.worker.error.emit("分析结果中没有推荐实体")
-                return
+                raise ValueError("分析结果中没有推荐实体")
             
             # 根据需要的数量决定是否需要重新生成
             if count <= len(base_entities):
@@ -1558,24 +1875,28 @@ class WizardPage(BasePage):
                 # 如果需要更多实体，调用LLM重新生成指定数量的实体
                 self.worker.progress.emit(f"需要生成{count}个实体，正在调用AI生成更多实体...")
                 
-                generation_prompt = f"""
-基于以下领域信息，请生成{count}个该领域的代表性实体：
+                # 增强的实体生成提示词
+                generation_prompt = f"""你是一个专业的知识图谱构建专家。请为指定领域生成实体列表。
 
-领域描述：{description}
-实体类型：{result.get('entity_type', 'Entity')}
-现有示例实体：{', '.join(base_entities[:5])}
+【领域信息】
+- 领域描述：{description}
+- 实体类型：{result.get('entity_type', 'Entity')}
+- 参考示例：{', '.join(base_entities[:5])}
 
-请以JSON格式返回：
+【任务要求】
+请生成{count}个该领域的代表性实体，严格按照以下JSON格式返回：
+
 {{
-    "entities": ["实体1", "实体2", ..., "实体{count}"]
+    "entities": ["实体1", "实体2", "实体3", ... , "实体{count}"]
 }}
 
-要求：
-1. 生成的实体应该多样化，涵盖该领域的不同方面
-2. 实体名称要准确、专业
-3. 避免重复，确保每个实体都有独特性
-4. 保持与现有示例实体相似的命名风格
-"""
+【生成规则】
+1. 实体名称要准确、专业、具有代表性
+2. 确保多样化，涵盖该领域的不同子类别和方面
+3. 避免重复，每个实体必须唯一
+4. 保持与示例实体相似的命名风格和专业程度
+5. 直接输出JSON，不要使用markdown代码块
+6. entities数组必须包含正好{count}个元素"""
                 
                 try:
                     # 调用LLM生成更多实体
@@ -1666,6 +1987,19 @@ class WizardPage(BasePage):
         self.worker.start()
     
     def on_dataset_complete(self, result):
+        # 检查结果是否有效
+        if result is None:
+            self.status.setText("生成失败：任务返回了空结果")
+            self.btn_generate_dataset.setEnabled(True)
+            self.main_window.show_toast("数据集生成失败：无返回结果", "error")
+            return
+        
+        if not isinstance(result, dict) or "dataframe" not in result:
+            self.status.setText("生成失败：返回数据格式错误")
+            self.btn_generate_dataset.setEnabled(True)
+            self.main_window.show_toast("数据集生成失败：数据格式错误", "error")
+            return
+        
         df = result["dataframe"]
         domain_name = result["domain_name"]
         domain_config = result["domain_config"]
@@ -2124,7 +2458,10 @@ class DomainPage(BasePage):
                 self.main_window.api_key, 
                 self.main_window.base_url,
                 self.main_window.model_name, 
-                self.main_window.provider
+                self.main_window.provider,
+                rpm=self.main_window.rpm,
+                tpm=self.main_window.tpm,
+                tpd=self.main_window.tpd
             )
             return enricher.generate_prompts_for_domain(domain, desc, source_instruction=source_instr)
         
@@ -2344,7 +2681,10 @@ class DataPage(BasePage):
                                                "num_gpu": getattr(self.main_window, 'num_gpu', 1),
                                                "keep_alive": self.main_window.keep_alive,
                                                "timeout": self.main_window.timeout
-                                           })
+                                           },
+                                           rpm=self.main_window.rpm,
+                                           tpm=self.main_window.tpm,
+                                           tpd=self.main_window.tpd)
                 
                 def progress_cb(completed):
                     self.worker.progress.emit(completed)
@@ -2904,7 +3244,7 @@ class SettingsPage(BasePage):
         self.main_window = main_window
         
         # Description
-        desc = QLabel("配置全局参数，包括 LLM 模型 API (OpenAI/Ollama/DashScope/DeepSeek)、Neo4j 数据库连接、界面主题及性能参数。")
+        desc = QLabel("配置全局参数，包括 LLM 模型 API (OpenAI/Ollama/DashScope/DeepSeek/Kimi)、Neo4j 数据库连接、界面主题及性能参数。")
         desc.setStyleSheet("color: #8b5a3c; font-size: 13px; margin-bottom: 10px;")
         desc.setWordWrap(True)
         self.layout.addWidget(desc)
@@ -2920,7 +3260,7 @@ class SettingsPage(BasePage):
         api_layout = QFormLayout(api_group)
         
         self.provider = QComboBox()
-        self.provider.addItems(["dashscope", "openai", "ollama", "deepseek"])
+        self.provider.addItems(["dashscope", "openai", "ollama", "deepseek", "kimi"])
         self.provider.setCurrentText(self.main_window.provider)
         self.provider.currentTextChanged.connect(self.on_provider_changed)
         api_layout.addRow("模型提供商:", self.provider)
@@ -3067,6 +3407,44 @@ class SettingsPage(BasePage):
         
         layout.addWidget(perf_group)
         
+        # --- Rate Limit Settings ---
+        rate_limit_group = QGroupBox("速率限制配置 (Rate Limits)")
+        rate_limit_layout = QFormLayout(rate_limit_group)
+        
+        self.rpm_spin = QSpinBox()
+        self.rpm_spin.setRange(1, 10000)
+        self.rpm_spin.setValue(getattr(self.main_window, 'rpm', 60))
+        self.rpm_spin.setSuffix(" 请求/分钟")
+        self.rpm_spin.setToolTip("RPM: 每分钟最大请求数 (Requests Per Minute)")
+        self.rpm_spin.valueChanged.connect(self.on_rpm_changed)
+        rate_limit_layout.addRow("RPM:", self.rpm_spin)
+        
+        self.tpm_spin = QSpinBox()
+        self.tpm_spin.setRange(1000, 10000000)
+        self.tpm_spin.setSingleStep(10000)
+        self.tpm_spin.setValue(getattr(self.main_window, 'tpm', 100000))
+        self.tpm_spin.setSuffix(" tokens/分钟")
+        self.tpm_spin.setToolTip("TPM: 每分钟最大Token数 (Tokens Per Minute)")
+        self.tpm_spin.valueChanged.connect(self.on_tpm_changed)
+        rate_limit_layout.addRow("TPM:", self.tpm_spin)
+        
+        self.tpd_spin = QSpinBox()
+        self.tpd_spin.setRange(10000, 100000000)
+        self.tpd_spin.setSingleStep(100000)
+        self.tpd_spin.setValue(getattr(self.main_window, 'tpd', 1000000))
+        self.tpd_spin.setSuffix(" tokens/天")
+        self.tpd_spin.setToolTip("TPD: 每天最大Token数 (Tokens Per Day)")
+        self.tpd_spin.valueChanged.connect(self.on_tpd_changed)
+        rate_limit_layout.addRow("TPD:", self.tpd_spin)
+        
+        # 添加速率限制说明
+        rate_info = QLabel("💡 根据您的API套餐配置速率限制，防止超额使用")
+        rate_info.setWordWrap(True)
+        rate_info.setStyleSheet("color: #666; font-size: 11px; padding: 5px;")
+        rate_limit_layout.addRow("", rate_info)
+        
+        layout.addWidget(rate_limit_group)
+        
         # Save Button
         self.btn_save = QPushButton("💾 保存所有设置")
         self.btn_save.setMinimumHeight(45)
@@ -3102,6 +3480,18 @@ class SettingsPage(BasePage):
         self.main_window.max_workers = value
         self.main_window.show_toast(f"并发数已设置为: {value}")
 
+    def on_rpm_changed(self, value):
+        self.main_window.rpm = value
+        self.main_window.show_toast(f"RPM已设置为: {value} 请求/分钟")
+
+    def on_tpm_changed(self, value):
+        self.main_window.tpm = value
+        self.main_window.show_toast(f"TPM已设置为: {value} tokens/分钟")
+
+    def on_tpd_changed(self, value):
+        self.main_window.tpd = value
+        self.main_window.show_toast(f"TPD已设置为: {value} tokens/天")
+
     def on_ctx_changed(self, value):
         self.main_window.num_ctx = value
 
@@ -3132,7 +3522,10 @@ class SettingsPage(BasePage):
                     "num_gpu": getattr(self.main_window, 'num_gpu', 1),
                     "keep_alive": self.main_window.keep_alive,
                     "timeout": self.main_window.timeout
-                }
+                },
+                rpm=self.main_window.rpm,
+                tpm=self.main_window.tpm,
+                tpd=self.main_window.tpd
             )
             return enricher.get_models()
             
@@ -3178,7 +3571,10 @@ class SettingsPage(BasePage):
                     "temperature": self.main_window.temperature,
                     "keep_alive": self.main_window.keep_alive,
                     "timeout": self.main_window.timeout
-                }
+                },
+                rpm=self.main_window.rpm,
+                tpm=self.main_window.tpm,
+                tpd=self.main_window.tpd
             )
             # Try a simple call
             return enricher._call_llm("Hello", system_prompt="You are a test assistant.")
@@ -3286,6 +3682,11 @@ class MainWindow(QMainWindow):
         self.model_name = "qwen-plus"
         self.max_workers = 3  # Default concurrency
         
+        # Rate Limit Settings
+        self.rpm = 60  # Requests Per Minute
+        self.tpm = 100000  # Tokens Per Minute
+        self.tpd = 1000000  # Tokens Per Day
+        
         # LLM Options
         self.num_ctx = 4096
         self.temperature = 0.7
@@ -3367,6 +3768,11 @@ class MainWindow(QMainWindow):
 
                     self.max_workers = settings.get("max_workers", self.max_workers)
                     
+                    # Load Rate Limits
+                    self.rpm = settings.get("rpm", self.rpm)
+                    self.tpm = settings.get("tpm", self.tpm)
+                    self.tpd = settings.get("tpd", self.tpd)
+                    
                     self.num_ctx = settings.get("num_ctx", self.num_ctx)
                     self.temperature = settings.get("temperature", self.temperature)
                     self.num_gpu = settings.get("num_gpu", self.num_gpu)
@@ -3388,6 +3794,9 @@ class MainWindow(QMainWindow):
             "provider": self.provider,
             "model_name": self.model_name,
             "max_workers": self.max_workers,
+            "rpm": self.rpm,
+            "tpm": self.tpm,
+            "tpd": self.tpd,
             "num_ctx": self.num_ctx,
             "temperature": self.temperature,
             "num_gpu": self.num_gpu,
