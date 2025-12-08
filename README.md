@@ -216,5 +216,6 @@ OpenChemKG/
 ---
 
 <p align="center">
-  Made with ❤️ by OpenChemKG Team
+  Made with ❤️ by FlyWill
 </p>
+
